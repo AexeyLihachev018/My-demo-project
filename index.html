@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подбор гидроцилиндров — Промгидравлика</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #030b1a; --surface: #061224; --surface2: #0b1a30;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+      --text: #ffffff; --muted: #7d90a8;
+      --orange: #f97316; --orange-dk: #ea580c; --orange-lt: rgba(249,115,22,.12);
+      --blue: #3b82f6; --blue-lt: #60a5fa; --blue-dk: #1d4ed8;
+      --navy: #0d1f47; --navy-lt: rgba(29,78,216,.18);
+      --cyan: #06b6d4; --purple: #a78bfa;
+      --green: #4ade80; --red: #f43f5e;
+    }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: Arial, sans-serif; font-weight: 400; overflow-x: hidden; line-height: 1.6; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
+    h1,h2,h3,.logo-text,.btn-cta,.btn-kp,.btn-submit,.stage-num,.stat-num,.art-code,.nav-link-active,
+    .step-num,.cert-num,.progress-label,.badge-text,.hero-tagline { font-family: 'Arial Black', Arial, sans-serif; }
+    /* Background effects */
+    body::before { content:''; position:fixed; inset:0; background: radial-gradient(ellipse 60% 55% at 20% 8%, rgba(29,78,216,.22) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 82% 85%, rgba(13,19,71,.95) 0%, transparent 55%), radial-gradient(ellipse 80% 80% at 50% 50%, rgba(6,11,26,1) 0%, transparent 100%); pointer-events:none; z-index:0; }
+    body::after { content:''; position:fixed; inset:0; background-image: linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px), linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px); background-size:72px 72px; pointer-events:none; z-index:0; opacity:.6; }
+    /* Floating orbs */
+    .orb { position:fixed; border-radius:50%; pointer-events:none; z-index:0; filter:blur(100px); }
+    .orb1 { width:700px; height:700px; background:rgba(29,78,216,.14); top:-200px; left:-200px; animation:orbFloat1 22s ease-in-out infinite; }
+    .orb2 { width:500px; height:500px; background:rgba(249,115,22,.06); bottom:-150px; right:-150px; animation:orbFloat2 28s ease-in-out infinite; }
+    .orb3 { width:450px; height:450px; background:rgba(6,182,212,.07); top:35%; left:55%; animation:orbFloat3 32s ease-in-out infinite; }
+    @keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(80px,50px)} 66%{transform:translate(-40px,90px)} }
+    @keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(-60px,-40px)} 66%{transform:translate(50px,-70px)} }
+    @keyframes orbFloat3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-100px,60px)} }
+    /* Mouse spotlight */
+    .spotlight { position:fixed; width:700px; height:700px; border-radius:50%; background:radial-gradient(circle, rgba(29,78,216,.07) 0%, transparent 70%); pointer-events:none; z-index:0; transform:translate(-50%,-50%); transition:opacity .3s; }
+    section, header, footer, .topbar { position:relative; z-index:1; }
+
+    /* ══ TOPBAR ══ */
+    .topbar { position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:12px 32px; background:rgba(3,11,26,.82); backdrop-filter:blur(20px); border-bottom:1px solid rgba(59,130,246,.1); }
+    .topbar-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .topbar-right { display:flex; align-items:center; gap:16px; }
+    .topbar-nav { display:flex; align-items:center; gap:6px; }
+    .topbar-nav a { padding:6px 14px; border-radius:50px; font-size:13px; font-weight:600; color:rgba(255,255,255,.7); text-decoration:none; border:1px solid transparent; transition:.2s; white-space:nowrap; }
+    .topbar-nav a:hover { color:#fff; border-color:var(--border2); background:rgba(255,255,255,.06); }
+    .topbar-phone { font-size:13px; font-weight:600; color:var(--text); text-decoration:none; display:flex; align-items:center; gap:6px; }
+    .topbar-phone:hover { color:var(--cyan); }
+    .topbar-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:50px; background:rgba(249,115,22,.15); border:1px solid rgba(249,115,22,.35); color:var(--orange); font-size:13px; font-weight:700; cursor:pointer; transition:.2s; white-space:nowrap; }
+    .topbar-btn:hover { background:rgba(249,115,22,.28); border-color:var(--orange); }
+    .mob-menu-btn { display:none; background:none; border:1px solid var(--border2); border-radius:8px; padding:8px; cursor:pointer; color:var(--text); }
+    .mob-menu-btn svg { width:18px; height:18px; display:block; }
+
+    /* ══ MOBILE OVERLAY ══ */
+    .mob-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(6,8,16,.96); backdrop-filter:blur(20px); flex-direction:column; padding:24px; }
+    .mob-overlay.open { display:flex; }
+    .mob-close { align-self:flex-end; background:none; border:1px solid var(--border2); border-radius:8px; padding:8px; cursor:pointer; color:var(--text); margin-bottom:32px; }
+    .mob-close svg { width:18px; height:18px; display:block; }
+    .mob-nav { display:flex; flex-direction:column; gap:4px; flex:1; }
+    .mob-nav a { padding:14px 16px; font-size:16px; font-weight:600; color:rgba(255,255,255,.8); text-decoration:none; border-radius:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .mob-nav a:hover { background:rgba(255,255,255,.05); color:#fff; }
+    .mob-contacts { margin-top:24px; display:flex; flex-direction:column; gap:12px; }
+    .mob-phone { font-size:20px; font-weight:700; color:var(--text); text-decoration:none; }
+    .mob-phone-free { font-size:14px; color:var(--muted); text-decoration:none; }
+    .mob-call-btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:16px; font-weight:700; border:none; cursor:pointer; font-family:'Arial Black',Arial,sans-serif; }
+
+    /* ══ SECTIONS ══ */
+    .section { padding:100px 32px; }
+    .section-alt { background:rgba(6,14,32,.55); }
+    .section-inner { max-width:1200px; margin:0 auto; }
+    .section-tag { display:inline-flex; align-items:center; gap:8px; padding:5px 14px; border-radius:50px; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.25); color:var(--blue-lt); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:16px; }
+    .section-title { font-size:38px; font-weight:900; line-height:1.15; margin-bottom:12px; }
+    .section-sub { font-size:17px; color:var(--muted); max-width:600px; margin-bottom:48px; }
+    .grad { background:linear-gradient(135deg,#60a5fa,#3b82f6,#2563eb,#60a5fa); background-size:300% 300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:gradShift 4s ease infinite; }
+    @keyframes gradShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* ══ HERO ══ */
+    header.hero { padding:140px 32px 80px; }
+    .hero-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr 480px; gap:60px; align-items:center; }
+    .hero-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:50px; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3); color:var(--blue-lt); font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-bottom:20px; }
+    .hero-badge span { width:6px; height:6px; border-radius:50%; background:var(--blue-lt); display:inline-block; animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+    h1 { font-size:68px; line-height:1.05; margin-bottom:20px; letter-spacing:-0.02em; }
+    .hero-sub { font-size:17px; color:var(--muted); line-height:1.7; margin-bottom:36px; max-width:520px; }
+    .hero-cta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:48px; }
+    .btn-cta { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; border-radius:50px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:16px; font-weight:900; border:none; cursor:pointer; box-shadow:0 0 30px rgba(249,115,22,.35); transition:.25s; text-decoration:none; }
+    .btn-cta:hover { box-shadow:0 0 45px rgba(249,115,22,.55); transform:translateY(-2px); }
+    .btn-cta svg { width:18px; height:18px; }
+    .btn-ghost { display:inline-flex; align-items:center; gap:8px; padding:14px 24px; border-radius:50px; background:transparent; border:1px solid var(--border2); color:rgba(255,255,255,.75); font-size:15px; font-weight:600; cursor:pointer; transition:.2s; text-decoration:none; }
+    .btn-ghost:hover { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.3); color:#fff; }
+    .hero-stats { display:flex; gap:32px; flex-wrap:wrap; }
+    .stat { display:flex; flex-direction:column; }
+    .stat-num { font-size:32px; color:var(--blue-lt); line-height:1; }
+    .stat-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:4px; }
+    /* Hero illustration */
+    .hero-visual { display:flex; align-items:center; justify-content:center; }
+    .hero-svg-wrap { position:relative; width:100%; max-width:460px; }
+    .hero-svg-wrap::before { content:''; position:absolute; inset:-30px; background:radial-gradient(ellipse 60% 50% at 50% 55%, rgba(59,130,246,.18) 0%, transparent 70%); border-radius:50%; pointer-events:none; animation:glowPulse 3s ease-in-out infinite; }
+    @keyframes glowPulse { 0%,100%{opacity:.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.08)} }
+    .hero-cyl-svg { width:100%; height:auto; filter:drop-shadow(0 8px 32px rgba(6,182,212,.22)); animation:floatY 6s ease-in-out infinite; }
+    @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    /* Topbar scrolled */
+    .topbar.scrolled { padding:8px 32px; box-shadow:0 4px 24px rgba(0,0,0,.4); border-bottom-color:rgba(255,255,255,.12); }
+    /* Active nav link */
+    .topbar-nav a.active { color:var(--orange); border-color:rgba(249,115,22,.3); background:rgba(249,115,22,.08); }
+    /* Parallax hero */
+    .hero-parallax { will-change:transform; }
+
+    /* ══ CALCULATOR ══ */
+    #calculator { padding:80px 32px; }
+    .calc-wrap { max-width:1200px; margin:0 auto; }
+    /* Progress bar */
+    .calc-progress { display:flex; align-items:center; gap:0; margin-bottom:40px; max-width:600px; }
+    .prog-step { display:flex; align-items:center; gap:10px; cursor:default; }
+    .prog-dot { width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--muted); transition:.35s; flex-shrink:0; }
+    .prog-step.active .prog-dot { border-color:var(--orange); background:rgba(249,115,22,.15); color:var(--orange); box-shadow:0 0 16px rgba(249,115,22,.3); }
+    .prog-step.done .prog-dot { border-color:var(--green); background:rgba(74,222,128,.12); color:var(--green); }
+    .prog-label { font-size:13px; font-weight:700; color:var(--muted); transition:.35s; white-space:nowrap; }
+    .prog-step.active .prog-label { color:var(--text); }
+    .prog-step.done .prog-label { color:var(--green); }
+    .prog-line { flex:1; height:2px; background:rgba(255,255,255,.1); margin:0 14px; transition:.35s; }
+    .prog-line.filled { background:linear-gradient(90deg,var(--green),var(--orange)); }
+    /* Calc outer */
+    .calc-outer { display:grid; grid-template-columns:1fr 300px; gap:32px; align-items:start; }
+    /* Stage */
+    .stage { background:rgba(11,26,48,.6); border:1px solid rgba(59,130,246,.12); border-radius:24px; overflow:hidden; }
+    .stage-head { display:flex; align-items:center; gap:14px; padding:22px 28px; border-bottom:1px solid var(--border); }
+    .stage-num { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; flex-shrink:0; }
+    .sn1 { background:rgba(249,115,22,.15); color:var(--orange); border:1px solid rgba(249,115,22,.3); }
+    .sn2 { background:rgba(59,130,246,.15); color:var(--blue); border:1px solid rgba(59,130,246,.3); }
+    .stage-title { font-size:16px; font-weight:700; line-height:1.35; }
+    .stage-body { padding:24px 28px; }
+    /* Stage 1 summary */
+    .s1-summary { display:none; background:rgba(74,222,128,.06); border:1px solid rgba(74,222,128,.2); border-radius:12px; padding:12px 16px; margin-bottom:20px; align-items:center; gap:16px; flex-wrap:wrap; }
+    .s1-summary.visible { display:flex; }
+    .s1-sum-tag { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--green); }
+    .s1-sum-val { font-size:13px; color:var(--text); }
+    .s1-sum-val b { color:var(--orange); }
+    .s1-sum-edit { margin-left:auto; padding:5px 12px; border-radius:50px; background:rgba(255,255,255,.05); border:1px solid var(--border2); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; transition:.2s; }
+    .s1-sum-edit:hover { color:var(--text); border-color:rgba(255,255,255,.3); }
+    /* Param rows */
+    .row-group { margin-bottom:20px; }
+    .row-group-label { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .param-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+    .param-name { font-size:14px; color:var(--muted); line-height:1.4; }
+    .param-inputs { display:flex; align-items:center; gap:8px; }
+    .param-hint { grid-column:1/-1; font-size:11px; color:rgba(148,163,184,.65); margin-top:-4px; margin-bottom:2px; line-height:1.5; }
+    .ci { width:100px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.06); border:1px solid var(--border2); color:var(--text); font-size:14px; font-family:Arial,sans-serif; outline:none; transition:.2s; }
+    .ci:focus { border-color:var(--orange); background:rgba(249,115,22,.06); box-shadow:0 0 0 3px rgba(249,115,22,.1); }
+    .ci.prefilled { border-color:rgba(59,130,246,.4); background:rgba(59,130,246,.06); }
+    .ci.error { border-color:var(--red); background:rgba(244,63,94,.06); }
+    .unit { font-size:12px; color:var(--muted); white-space:nowrap; }
+    .cr { width:100px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--muted); font-size:14px; text-align:right; }
+    .cr.filled { color:var(--text); border-color:rgba(74,222,128,.3); background:rgba(74,222,128,.05); }
+    .cr.filled-hi { color:var(--orange); border-color:rgba(249,115,22,.4); background:rgba(249,115,22,.06); font-weight:700; }
+    /* Toggle */
+    .toggle-wrap { display:flex; background:rgba(255,255,255,.05); border-radius:8px; border:1px solid var(--border); overflow:hidden; }
+    .toggle-btn { padding:6px 10px; font-size:12px; font-weight:600; background:none; border:none; color:var(--muted); cursor:pointer; transition:.2s; }
+    .toggle-btn.on { background:var(--orange); color:#fff; }
+    /* Error msg */
+    .err-msg { font-size:12px; color:var(--red); margin-top:6px; display:none; }
+    .err-msg.visible { display:block; }
+    /* Article */
+    .art-row { background:rgba(249,115,22,.06); border:1px solid rgba(249,115,22,.2); border-radius:14px; padding:16px 20px; margin-top:20px; display:none; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .art-row.visible { display:flex; }
+    .art-code { font-size:24px; color:var(--orange); letter-spacing:.04em; }
+    .art-label { font-size:12px; color:var(--muted); margin-top:2px; }
+    .art-deadline { font-size:13px; color:var(--green); font-weight:600; }
+    /* Result buttons */
+    .result-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+    .btn-copy,.btn-print,.btn-kp { display:inline-flex; align-items:center; gap:7px; padding:10px 18px; border-radius:50px; font-size:13px; font-weight:700; border:none; cursor:pointer; transition:.2s; }
+    .btn-copy { background:rgba(255,255,255,.07); border:1px solid var(--border2); color:var(--text); }
+    .btn-copy:hover { background:rgba(255,255,255,.13); }
+    .btn-print { background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.3); color:var(--blue); }
+    .btn-print:hover { background:rgba(59,130,246,.22); }
+    .btn-kp { background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; box-shadow:0 0 20px rgba(249,115,22,.25); }
+    .btn-kp:hover { box-shadow:0 0 32px rgba(249,115,22,.45); transform:translateY(-1px); }
+    .btn-kp svg,.btn-copy svg,.btn-print svg { width:15px; height:15px; }
+    /* Back btn */
+    .btn-back { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:50px; background:none; border:1px solid var(--border2); color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:.2s; margin-bottom:16px; }
+    .btn-back:hover { color:var(--text); border-color:rgba(255,255,255,.3); }
+    /* Stage arrow */
+    .stage-arrow { text-align:center; padding:12px 0; display:flex; align-items:center; justify-content:center; gap:8px; color:var(--muted); font-size:13px; }
+    .stage-arrow svg { width:20px; height:20px; color:var(--blue); }
+    /* Diagram panel */
+    .diag-panel { background:rgba(11,26,48,.7); border:1px solid rgba(59,130,246,.12); border-radius:24px; padding:20px 16px; position:sticky; top:82px; display:flex; flex-direction:column; gap:14px; }
+    .diag-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-align:center; }
+    .diag-svg { width:100%; height:auto; display:block; }
+    .diag-legend { display:flex; flex-direction:column; gap:6px; }
+    .diag-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+    .diag-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .diag-name { color:var(--muted); flex:1; }
+    .diag-val { color:var(--text); font-weight:600; font-size:12px; }
+
+    /* ══ HERO BLOB ══ */
+    .hero-blob { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+    .hero-blob svg { position:absolute; top:-10%; right:-8%; width:72%; max-width:680px; opacity:.55; animation:blobMorph 18s ease-in-out infinite alternate; transform-origin:center; }
+    @keyframes blobMorph { 0%{transform:scale(1) rotate(0deg)} 33%{transform:scale(1.04) rotate(3deg)} 66%{transform:scale(.97) rotate(-2deg)} 100%{transform:scale(1.02) rotate(1deg)} }
+    header.hero { position:relative; }
+    .hero-left,.hero-visual { position:relative; z-index:1; }
+
+    /* ══ HOW IT WORKS ══ */
+    .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; position:relative; }
+    .steps::before { content:''; position:absolute; top:28px; left:calc(12.5% + 14px); right:calc(12.5% + 14px); height:2px; background:linear-gradient(90deg,rgba(249,115,22,.4),rgba(59,130,246,.4)); }
+    .step { display:flex; flex-direction:column; gap:14px; align-items:flex-start; position:relative; }
+    .step-num { width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; background:rgba(29,78,216,.12); border:1px solid rgba(59,130,246,.25); color:var(--blue-lt); position:relative; z-index:1; transition:.3s; }
+    .step:hover .step-num { background:rgba(59,130,246,.2); border-color:rgba(59,130,246,.5); box-shadow:0 0 20px rgba(59,130,246,.25); transform:scale(1.08); }
+    .step { transition:transform .3s; }
+    .step:hover { transform:translateY(-4px); }
+    .step-title { font-size:16px; font-weight:700; }
+    .step-text { font-size:14px; color:var(--muted); line-height:1.6; }
+    .step-note { font-size:12px; color:var(--cyan); font-style:italic; }
+
+    /* ══ PROJECTS ══ */
+    .projects-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .proj-card { background:rgba(11,26,48,.6); border:1px solid rgba(59,130,246,.12); border-radius:20px; overflow:hidden; transition:transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s, border-color .35s; transform-style:preserve-3d; will-change:transform; }
+    .proj-card:hover { transform:translateY(-8px) rotateX(2deg); border-color:rgba(59,130,246,.4); box-shadow:0 20px 60px rgba(29,78,216,.18), 0 4px 16px rgba(0,0,0,.4); }
+    .proj-img { height:180px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+    .proj-img svg { width:72px; height:72px; opacity:.7; }
+    .proj-tag { position:absolute; top:14px; left:14px; padding:4px 10px; border-radius:50px; font-size:11px; font-weight:700; background:rgba(6,8,16,.7); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.8); backdrop-filter:blur(8px); }
+    .proj-body { padding:20px; }
+    .proj-title { font-size:16px; font-weight:700; margin-bottom:10px; }
+    .proj-row { display:flex; gap:6px; margin-bottom:6px; font-size:13px; }
+    .proj-row-label { color:var(--muted); flex-shrink:0; }
+    .proj-row-val { color:var(--text); }
+    .proj-article { display:inline-block; margin-top:12px; padding:4px 12px; border-radius:50px; background:rgba(249,115,22,.1); border:1px solid rgba(249,115,22,.25); color:var(--orange); font-size:12px; font-weight:700; font-family:'Arial Black',Arial,sans-serif; letter-spacing:.04em; }
+
+    /* ══ WHY US ══ */
+    .why-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .why-card { background:rgba(11,26,48,.6); border:1px solid rgba(59,130,246,.1); border-radius:20px; padding:24px; transition:transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s, border-color .35s, background .35s; will-change:transform; }
+    .why-card:hover { border-color:rgba(59,130,246,.35); background:rgba(29,78,216,.1); transform:translateY(-6px) scale(1.01); box-shadow:0 16px 40px rgba(29,78,216,.15); }
+    .why-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+    .why-icon svg { width:22px; height:22px; }
+    .why-title { font-size:15px; font-weight:700; margin-bottom:8px; }
+    .why-text { font-size:13px; color:var(--muted); line-height:1.6; }
+    .why-vs { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px; }
+    .why-us { color:var(--green); font-weight:700; }
+    .why-them { color:var(--red); text-decoration:line-through; color:rgba(148,163,184,.5); }
+
+    /* ══ CERTIFICATES ══ */
+    .cert-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    .cert-card { background:rgba(11,26,48,.6); border:1px solid rgba(59,130,246,.1); border-radius:20px; padding:24px 20px; text-align:center; transition:transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s, border-color .35s; will-change:transform; }
+    .cert-card:hover { border-color:rgba(59,130,246,.4); transform:translateY(-6px); box-shadow:0 14px 36px rgba(29,78,216,.18); }
+    .cert-card:hover .cert-icon { background:rgba(6,182,212,.18); transform:scale(1.1); }
+    .cert-icon { transition:transform .3s, background .3s; }
+    .cert-icon { width:52px; height:52px; border-radius:16px; background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.2); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+    .cert-icon svg { width:26px; height:26px; color:var(--cyan); }
+    .cert-title { font-size:15px; font-weight:700; margin-bottom:8px; }
+    .cert-text { font-size:13px; color:var(--muted); line-height:1.55; }
+
+    /* ══ FAQ ══ */
+    .faq-list { display:flex; flex-direction:column; gap:8px; max-width:800px; }
+    .faq-item { background:rgba(11,26,48,.55); border:1px solid rgba(59,130,246,.1); border-radius:16px; overflow:hidden; transition:.2s; }
+    .faq-item:hover { border-color:rgba(59,130,246,.25); }
+    .faq-q { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; background:none; border:none; color:var(--text); font-size:15px; font-weight:600; cursor:pointer; text-align:left; font-family:Arial,sans-serif; }
+    .faq-icon { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.05); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; transition:.3s; }
+    .faq-icon svg { width:12px; height:12px; color:var(--muted); transition:.3s; }
+    .faq-item.open .faq-icon { background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.3); }
+    .faq-item.open .faq-icon svg { color:var(--orange); transform:rotate(45deg); }
+    .faq-a { max-height:0; overflow:hidden; transition:max-height .35s ease; }
+    .faq-a-inner { padding:0 22px 18px; font-size:14px; color:var(--muted); line-height:1.7; }
+    .faq-a-inner strong { color:var(--text); }
+
+    /* ══ CTA FORM ══ */
+    #contacts { background:linear-gradient(180deg, transparent 0%, rgba(29,78,216,.06) 50%, transparent 100%); }
+    .cta-box { background:rgba(11,26,48,.7); border:1px solid rgba(59,130,246,.15); border-radius:28px; padding:52px; display:grid; grid-template-columns:1fr 1fr; gap:52px; align-items:start; }
+    .cta-left h2 { font-size:36px; margin-bottom:10px; }
+    .cta-left p { font-size:16px; color:var(--muted); line-height:1.7; margin-bottom:24px; }
+    .cta-trust { display:flex; flex-direction:column; gap:10px; }
+    .cta-trust-item { display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); }
+    .cta-trust-item svg { width:16px; height:16px; color:var(--green); flex-shrink:0; }
+    .form-grid { display:flex; flex-direction:column; gap:14px; }
+    .form-field { display:flex; flex-direction:column; gap:6px; }
+    .form-field label { font-size:13px; font-weight:600; color:var(--muted); }
+    .form-field input, .form-field textarea, .form-field select { padding:12px 16px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid var(--border2); color:var(--text); font-size:14px; font-family:Arial,sans-serif; outline:none; transition:.2s; resize:none; }
+    .form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color:var(--orange); background:rgba(249,115,22,.06); box-shadow:0 0 0 3px rgba(249,115,22,.1); }
+    .form-field input.err, .form-field textarea.err { border-color:var(--red); }
+    .form-field .ferr { font-size:12px; color:var(--red); display:none; }
+    .form-field .ferr.show { display:block; }
+    .form-field select option { background:#1a2035; }
+    .urgency-row { display:flex; gap:8px; }
+    .urgency-btn { flex:1; padding:10px 8px; border-radius:10px; background:rgba(255,255,255,.04); border:1px solid var(--border2); color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:.2s; text-align:center; }
+    .urgency-btn.selected { background:rgba(249,115,22,.12); border-color:rgba(249,115,22,.4); color:var(--orange); }
+    .btn-submit { width:100%; padding:14px; border-radius:14px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:16px; font-weight:900; border:none; cursor:pointer; box-shadow:0 0 24px rgba(249,115,22,.3); transition:.25s; margin-top:4px; }
+    .btn-submit:hover { box-shadow:0 0 40px rgba(249,115,22,.5); transform:translateY(-2px); }
+    .form-note { font-size:12px; color:var(--muted); text-align:center; margin-top:8px; line-height:1.6; }
+    .form-success { display:none; text-align:center; padding:40px 20px; }
+    .form-success.show { display:block; }
+    .success-icon { width:60px; height:60px; border-radius:50%; background:rgba(74,222,128,.15); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+    .success-icon svg { width:28px; height:28px; color:var(--green); }
+    .form-success h3 { font-size:22px; margin-bottom:8px; }
+    .form-success p { color:var(--muted); font-size:14px; line-height:1.7; }
+
+    /* ══ FOOTER ══ */
+    footer { padding:48px 32px; border-top:1px solid var(--border); }
+    .footer-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr; gap:40px; }
+    .footer-about p { font-size:14px; color:var(--muted); line-height:1.7; margin-top:12px; max-width:300px; }
+    .footer-col h4 { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--text); }
+    .footer-col a, .footer-col p { display:block; font-size:14px; color:var(--muted); text-decoration:none; margin-bottom:8px; }
+    .footer-col a:hover { color:var(--orange); }
+    .footer-bottom { max-width:1200px; margin:28px auto 0; padding-top:20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .footer-copy { font-size:13px; color:var(--muted); }
+    .footer-site { font-size:13px; color:var(--orange); text-decoration:none; }
+    .footer-site:hover { text-decoration:underline; }
+
+    /* ══ MODAL ══ */
+    .modal-overlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(6,8,16,.85); backdrop-filter:blur(12px); align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:rgba(6,18,36,.97); border:1px solid rgba(59,130,246,.2); border-radius:24px; padding:36px; width:100%; max-width:420px; position:relative; }
+    .modal-close { position:absolute; top:16px; right:16px; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.07); border:1px solid var(--border2); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .modal-close svg { width:14px; height:14px; }
+    .modal-icon { width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(234,88,12,.2)); display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+    .modal-icon svg { width:24px; height:24px; color:var(--orange); }
+    .modal h3 { font-size:22px; margin-bottom:6px; }
+    .modal p { font-size:14px; color:var(--muted); margin-bottom:22px; }
+    .modal-field { margin-bottom:14px; }
+    .modal-field label { display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+    .modal-field input { width:100%; padding:12px 16px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid var(--border2); color:var(--text); font-size:14px; font-family:Arial,sans-serif; outline:none; transition:.2s; }
+    .modal-field input:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(249,115,22,.1); }
+    .modal-submit { width:100%; padding:13px; border-radius:12px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:15px; font-weight:700; border:none; cursor:pointer; font-family:'Arial Black',Arial,sans-serif; transition:.2s; }
+    .modal-submit:hover { box-shadow:0 0 24px rgba(249,115,22,.4); }
+    .modal-note { text-align:center; font-size:12px; color:var(--muted); margin-top:10px; }
+    .modal-success { display:none; text-align:center; padding:20px 0; }
+    .modal-success.show { display:block; }
+
+    /* ══ FLOAT BUTTON ══ */
+    .float-call { position:fixed; bottom:28px; right:28px; z-index:150; display:flex; align-items:center; gap:0; cursor:pointer; }
+    .float-btn { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(249,115,22,.4); transition:.25s; border:none; cursor:pointer; }
+    .float-btn svg { width:22px; height:22px; color:#fff; animation:ring 3s ease-in-out infinite; }
+    @keyframes ring { 0%,100%{transform:rotate(0)} 10%{transform:rotate(-15deg)} 20%{transform:rotate(15deg)} 30%{transform:rotate(-10deg)} 40%{transform:rotate(10deg)} 50%{transform:rotate(0)} }
+    .float-label { max-width:0; overflow:hidden; white-space:nowrap; font-size:13px; font-weight:700; color:#fff; background:rgba(6,8,16,.9); border:1px solid var(--border2); padding:0; border-radius:50px 0 0 50px; transition:.3s; }
+    .float-call:hover .float-label { max-width:160px; padding:0 14px 0 16px; }
+    .float-call:hover .float-btn { border-radius:0 50% 50% 0; }
+
+    /* ══ SCROLL REVEAL ══ */
+    .reveal { opacity:0; transform:translateY(32px); transition:opacity .65s cubic-bezier(.22,.61,.36,1), transform .65s cubic-bezier(.22,.61,.36,1); }
+    .reveal.visible { opacity:1; transform:none; }
+    .reveal-left { opacity:0; transform:translateX(-36px); transition:opacity .65s cubic-bezier(.22,.61,.36,1), transform .65s cubic-bezier(.22,.61,.36,1); }
+    .reveal-left.visible { opacity:1; transform:none; }
+    .reveal-right { opacity:0; transform:translateX(36px); transition:opacity .65s cubic-bezier(.22,.61,.36,1), transform .65s cubic-bezier(.22,.61,.36,1); }
+    .reveal-right.visible { opacity:1; transform:none; }
+    .reveal-scale { opacity:0; transform:scale(.94); transition:opacity .5s ease, transform .5s ease; }
+    .reveal-scale.visible { opacity:1; transform:scale(1); }
+    /* Stagger delays for grid children */
+    .stagger > *:nth-child(1){transition-delay:.05s} .stagger > *:nth-child(2){transition-delay:.15s} .stagger > *:nth-child(3){transition-delay:.25s} .stagger > *:nth-child(4){transition-delay:.35s} .stagger > *:nth-child(5){transition-delay:.45s} .stagger > *:nth-child(6){transition-delay:.55s}
+
+    /* ══ RESPONSIVE ══ */
+    @media (max-width:1100px) {
+      h1 { font-size:52px; }
+      .hero-inner { grid-template-columns:1fr 360px; gap:40px; }
+      .section-title { font-size:32px; }
+      .calc-outer { grid-template-columns:1fr 260px; }
+      .cert-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:900px) {
+      .topbar-nav, .topbar-right { display:none; }
+      .mob-menu-btn { display:block; }
+      .hero-inner { grid-template-columns:1fr; }
+      .hero-visual { display:none; }
+      .calc-outer { grid-template-columns:1fr; }
+      .diag-panel { position:static; }
+      .steps { grid-template-columns:1fr 1fr; }
+      .steps::before { display:none; }
+      .projects-grid { grid-template-columns:1fr 1fr; }
+      .why-grid { grid-template-columns:1fr 1fr; }
+      .cert-grid { grid-template-columns:repeat(2,1fr); }
+      .cta-box { grid-template-columns:1fr; gap:36px; padding:36px; }
+      .footer-inner { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:600px) {
+      .section { padding:64px 20px; }
+      header.hero { padding:100px 20px 60px; }
+      #calculator { padding:60px 20px; }
+      h1 { font-size:38px; }
+      .section-title { font-size:26px; }
+      .steps { grid-template-columns:1fr; }
+      .projects-grid { grid-template-columns:1fr; }
+      .why-grid { grid-template-columns:1fr; }
+      .cert-grid { grid-template-columns:1fr 1fr; }
+      .cta-box { padding:24px; }
+      .footer-inner { grid-template-columns:1fr; }
+      .topbar { padding:12px 20px; }
+      .hero-stats { gap:20px; }
+      .stat-num { font-size:26px; }
+      .urgency-row { flex-direction:column; }
+      .result-actions { flex-direction:column; }
+      .btn-copy,.btn-print,.btn-kp { justify-content:center; }
+    }
+    @media (max-width:375px) {
+      h1 { font-size:32px; }
+      .ci, .cr { width:84px; }
+    }
+    /* ══ BACK TO TOP ══ */
+    .back-top { position:fixed; bottom:96px; right:28px; z-index:149; width:44px; height:44px; border-radius:50%; background:rgba(249,115,22,.15); border:1px solid rgba(249,115,22,.35); color:var(--orange); display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transform:translateY(16px) scale(.85); transition:opacity .35s,transform .35s; pointer-events:none; }
+    .back-top.show { opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+    .back-top:hover { background:rgba(249,115,22,.3); transform:translateY(-3px) scale(1.08); box-shadow:0 6px 20px rgba(249,115,22,.35); }
+    .back-top svg { width:16px; height:16px; }
+
+    /* ══ HAMBURGER ANIMATION ══ */
+    .mob-menu-btn { transition:.2s; }
+    .mob-menu-btn .hb-line { transition:transform .3s,opacity .3s; transform-origin:center; display:block; }
+
+    /* ══ FEEDBACK FORM ══ */
+    .feedback-wrap { max-width:640px; margin:0 auto; }
+    .feedback-card { background:rgba(11,26,48,.7); border:1px solid rgba(59,130,246,.15); border-radius:28px; padding:44px 48px; position:relative; overflow:hidden; }
+    .feedback-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(29,78,216,.06),transparent 60%); pointer-events:none; }
+    .fb-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .fb-field { display:flex; flex-direction:column; gap:6px; }
+    .fb-field label { font-size:13px; font-weight:600; color:var(--muted); }
+    .fb-field input,.fb-field textarea { padding:13px 16px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid var(--border2); color:var(--text); font-size:14px; font-family:Arial,sans-serif; outline:none; transition:.25s; resize:none; }
+    .fb-field input:focus,.fb-field textarea:focus { border-color:var(--orange); background:rgba(249,115,22,.06); box-shadow:0 0 0 3px rgba(249,115,22,.12); }
+    .fb-field input.fb-err,.fb-field textarea.fb-err { border-color:var(--red); }
+    .fb-field .fb-ferr { font-size:12px; color:var(--red); display:none; margin-top:2px; }
+    .fb-field .fb-ferr.on { display:block; }
+    .fb-msg { margin-bottom:14px; }
+    .btn-fb-send { width:100%; padding:14px; border-radius:14px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:16px; font-weight:900; border:none; cursor:pointer; font-family:'Arial Black',Arial,sans-serif; box-shadow:0 0 20px rgba(249,115,22,.25); transition:.25s; position:relative; overflow:hidden; }
+    .btn-fb-send:hover { box-shadow:0 0 40px rgba(249,115,22,.5); transform:translateY(-2px); }
+    .btn-fb-send .btn-ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,.25); width:0; height:0; top:50%; left:50%; transform:translate(-50%,-50%); animation:ripple .6s ease-out forwards; pointer-events:none; }
+    @keyframes ripple { to { width:300px; height:300px; opacity:0; } }
+    /* Success animation */
+    .fb-success { display:none; text-align:center; padding:20px 0; }
+    .fb-success.show { display:block; animation:fadeInUp .5s ease forwards; }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .fb-success-ring { position:relative; width:80px; height:80px; margin:0 auto 20px; }
+    .fb-success-ring svg { position:absolute; inset:0; }
+    .fb-ring-bg { stroke:rgba(74,222,128,.15); }
+    .fb-ring-prog { stroke:var(--green); stroke-dasharray:226; stroke-dashoffset:226; stroke-linecap:round; animation:drawRing .8s .1s cubic-bezier(.4,0,.2,1) forwards; }
+    @keyframes drawRing { to { stroke-dashoffset:0; } }
+    .fb-check { stroke:var(--green); stroke-dasharray:40; stroke-dashoffset:40; animation:drawCheck .4s .7s ease forwards; }
+    @keyframes drawCheck { to { stroke-dashoffset:0; } }
+    .confetti-container { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .cpiece { position:absolute; width:8px; height:8px; border-radius:2px; top:50%; left:50%; animation:confettiFly var(--dur,.8s) var(--delay,0s) ease-out forwards; opacity:0; }
+    @keyframes confettiFly { 0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) rotate(0deg) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) translate(var(--tx),var(--ty)) rotate(var(--rot,360deg)) scale(.4)} }
+
+    @media print {
+      .topbar,.float-call,.mob-overlay,.modal-overlay { display:none!important; }
+      body { background:#fff; color:#000; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ BACKGROUND ORBS ══ -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="spotlight" id="spotlight"></div>
+
+<!-- ══ MOBILE OVERLAY ══ -->
+<div class="mob-overlay" id="mobOverlay">
+  <button class="mob-close" onclick="closeMob()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <nav class="mob-nav">
+    <a href="#calculator" onclick="closeMob()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      Калькулятор
+    </a>
+    <a href="#projects" onclick="closeMob()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      Проекты
+    </a>
+    <a href="#faq" onclick="closeMob()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      FAQ
+    </a>
+    <a href="#contacts" onclick="closeMob()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+      Контакты
+    </a>
+  </nav>
+  <div class="mob-contacts">
+    <a class="mob-phone" href="tel:+73412775704">+7 (3412) 77-57-04</a>
+    <a class="mob-phone-free" href="tel:88004447065">Бесплатно: 8 (800) 444-70-65</a>
+    <button class="mob-call-btn" onclick="openModal();closeMob()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+      Заказать звонок
+    </button>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <a class="topbar-logo" href="#">
+    <svg viewBox="0 0 260 38" xmlns="http://www.w3.org/2000/svg" style="height:30px;display:block;">
+      <polygon points="15,4 27,4 33,15 27,26 15,26 9,15" fill="none" stroke="#f97316" stroke-width="2"/>
+      <text x="15" y="19" font-family="Arial Black,Arial,sans-serif" font-size="10" font-weight="900" fill="#f97316" text-anchor="middle" dominant-baseline="middle">ПГ</text>
+      <text x="42" y="12" font-family="Arial Black,Arial,sans-serif" font-size="11" font-weight="900" fill="#f1f5f9" letter-spacing="1">ПРОМГИДРАВЛИКА</text>
+      <text x="42" y="25" font-family="Arial,sans-serif" font-size="8" fill="#94a3b8" letter-spacing="1.5">ГРУППА КОМПАНИЙ</text>
+    </svg>
+  </a>
+  <nav class="topbar-nav">
+    <a href="#calculator">Калькулятор</a>
+    <a href="#how">Как работаем</a>
+    <a href="#projects">Проекты</a>
+    <a href="#faq">FAQ</a>
+    <a href="#contacts">Контакты</a>
+  </nav>
+  <div class="topbar-right">
+    <a class="topbar-phone" href="tel:+73412775704">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+      +7 (3412) 77-57-04
+    </a>
+    <button class="topbar-btn" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+      Заказать звонок
+    </button>
+    <button class="mob-menu-btn" id="hambBtn" onclick="openMob()">
+      <svg id="hambSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+        <line class="hb-line" id="hb1" x1="3" y1="6" x2="21" y2="6"/>
+        <line class="hb-line" id="hb2" x1="3" y1="12" x2="21" y2="12"/>
+        <line class="hb-line" id="hb3" x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══ HERO ══ -->
+<header class="hero">
+  <!-- Organic fluid blob background -->
+  <div class="hero-blob">
+    <svg viewBox="0 0 800 700" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="blob1g" cx="50%" cy="45%" r="55%">
+          <stop offset="0%" stop-color="rgba(29,78,216,0.55)"/>
+          <stop offset="40%" stop-color="rgba(59,130,246,0.3)"/>
+          <stop offset="100%" stop-color="rgba(3,11,26,0)"/>
+        </radialGradient>
+        <radialGradient id="blob2g" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(6,182,212,0.25)"/>
+          <stop offset="100%" stop-color="rgba(3,11,26,0)"/>
+        </radialGradient>
+        <filter id="blobBlur"><feGaussianBlur stdDeviation="28"/></filter>
+      </defs>
+      <!-- Main large organic shape -->
+      <path d="M540 60 C660 20 800 100 790 240 C780 360 720 420 680 500 C640 580 600 650 520 660 C440 670 360 610 300 530 C240 450 200 360 220 270 C240 180 280 100 380 70 C430 55 490 70 540 60Z" fill="url(#blob1g)" filter="url(#blobBlur)"/>
+      <!-- Secondary smaller organic accent -->
+      <path d="M650 200 C700 160 760 180 770 250 C780 320 740 380 700 390 C660 400 610 360 600 300 C590 240 600 240 650 200Z" fill="url(#blob2g)" filter="url(#blobBlur)" opacity="0.7"/>
+    </svg>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge reveal"><span></span>Онлайн-калькулятор · бесплатно</div>
+      <h1 class="reveal">Подберите <span class="grad">гидроцилиндр</span><br>за 3 минуты</h1>
+      <p class="hero-sub reveal">Введите усилие и давление — калькулятор выдаст артикул, объём масла и подачу насоса. Без звонков и регистрации.</p>
+      <div class="hero-cta reveal">
+        <a class="btn-cta" href="#calculator">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          Рассчитать сейчас
+        </a>
+        <button class="btn-ghost" onclick="openModal()">Заказать звонок</button>
+      </div>
+      <div class="hero-stats reveal">
+        <div class="stat"><div class="stat-num" data-count="15">0</div><div class="stat-label">лет на рынке</div></div>
+        <div class="stat"><div class="stat-num" data-count="1200">0</div><div class="stat-label">проектов</div></div>
+        <div class="stat"><div class="stat-num" data-count="60">0</div><div class="stat-label">регионов</div></div>
+        <div class="stat"><div class="stat-num">2 года</div><div class="stat-label">гарантия</div></div>
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <div class="hero-svg-wrap">
+        <svg class="hero-cyl-svg" viewBox="0 0 460 280" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rodG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#e2e8f0"/><stop offset="40%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#475569"/></linearGradient>
+            <linearGradient id="barrelG" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="rgba(14,30,53,0.9)"/><stop offset="100%" stop-color="rgba(8,18,36,0.95)"/></linearGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowOrange"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <radialGradient id="glowBg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(249,115,22,0.15)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+          </defs>
+          <!-- Background glow -->
+          <ellipse cx="230" cy="160" rx="180" ry="90" fill="url(#glowBg)"/>
+          <!-- Barrel walls -->
+          <rect x="60" y="90" width="260" height="18" rx="4" fill="url(#barrelG)" stroke="rgba(6,182,212,0.55)" stroke-width="1.5"/>
+          <rect x="60" y="172" width="260" height="18" rx="4" fill="url(#barrelG)" stroke="rgba(6,182,212,0.55)" stroke-width="1.5"/>
+          <!-- Left cap -->
+          <rect x="44" y="82" width="28" height="116" rx="6" fill="#0c1a2e" stroke="rgba(6,182,212,0.6)" stroke-width="1.5"/>
+          <!-- Left cap detail -->
+          <line x1="54" y1="95" x2="54" y2="185" stroke="rgba(6,182,212,0.2)" stroke-width="3" stroke-linecap="round"/>
+          <!-- Right seal -->
+          <rect x="292" y="96" width="14" height="88" rx="3" fill="#0c1a2e" stroke="rgba(6,182,212,0.45)" stroke-width="1.5"/>
+          <!-- Piston -->
+          <rect x="230" y="88" width="28" height="104" rx="4" fill="#0e1e35" stroke="rgba(6,182,212,0.5)" stroke-width="1.5"/>
+          <!-- Piston rings (orange) -->
+          <rect x="232" y="103" width="24" height="4" rx="2" fill="#f97316" opacity="0.8" filter="url(#glowOrange)"/>
+          <rect x="232" y="112" width="24" height="4" rx="2" fill="#f97316" opacity="0.6"/>
+          <rect x="232" y="160" width="24" height="4" rx="2" fill="#f97316" opacity="0.6"/>
+          <rect x="232" y="169" width="24" height="4" rx="2" fill="#f97316" opacity="0.8" filter="url(#glowOrange)"/>
+          <!-- Rod -->
+          <rect x="306" y="122" width="120" height="36" rx="5" fill="url(#rodG)" stroke="rgba(148,163,184,0.25)" stroke-width="1"/>
+          <!-- Rod highlight -->
+          <rect x="306" y="122" width="120" height="8" rx="4" fill="rgba(255,255,255,0.14)"/>
+          <!-- Rod end -->
+          <circle cx="426" cy="140" r="12" fill="#1e293b" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <circle cx="426" cy="140" r="5" fill="#94a3b8" opacity="0.5"/>
+          <!-- Left end bolt -->
+          <circle cx="58" cy="140" r="10" fill="#0c1a2e" stroke="rgba(6,182,212,0.4)" stroke-width="1.5"/>
+          <circle cx="58" cy="140" r="4" fill="#06b6d4" opacity="0.5"/>
+          <!-- Dimension D -->
+          <line x1="24" y1="90" x2="24" y2="190" stroke="#06b6d4" stroke-width="1.5" filter="url(#glow)"/>
+          <line x1="18" y1="90" x2="30" y2="90" stroke="#06b6d4" stroke-width="1.5"/>
+          <line x1="18" y1="190" x2="30" y2="190" stroke="#06b6d4" stroke-width="1.5"/>
+          <text x="12" y="144" fill="#06b6d4" font-size="14" font-family="Arial" font-weight="700" text-anchor="middle">D</text>
+          <!-- Dimension d (orange, rod) -->
+          <line x1="434" y1="122" x2="434" y2="158" stroke="#f97316" stroke-width="1.5" filter="url(#glowOrange)"/>
+          <line x1="428" y1="122" x2="440" y2="122" stroke="#f97316" stroke-width="1.5"/>
+          <line x1="428" y1="158" x2="440" y2="158" stroke="#f97316" stroke-width="1.5"/>
+          <text x="446" y="144" fill="#f97316" font-size="14" font-family="Arial" font-weight="700" text-anchor="start">d</text>
+          <!-- Dimension L -->
+          <line x1="60" y1="220" x2="306" y2="220" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="60" y1="213" x2="60" y2="227" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="306" y1="213" x2="306" y2="227" stroke="#a78bfa" stroke-width="1.5"/>
+          <polyline points="66,216 60,220 66,224" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="300,216 306,220 300,224" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="183" y="240" fill="#a78bfa" font-size="12" font-family="Arial" font-weight="700" text-anchor="middle">L — ход штока</text>
+          <!-- Label -->
+          <text x="183" y="70" fill="rgba(148,163,184,0.5)" font-size="10" font-family="Arial" text-anchor="middle" letter-spacing="2.5">ГИДРОЦИЛИНДР</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ CALCULATOR ══ -->
+<section id="calculator">
+  <div class="calc-wrap">
+    <div class="section-tag reveal">Онлайн-калькулятор</div>
+    <h2 class="section-title reveal">Калькулятор <span class="grad">гидроцилиндров</span></h2>
+    <p class="section-sub reveal">Введите параметры — результат появится сразу. Получите артикул по ГОСТ и отправьте заявку одной кнопкой.</p>
+
+    <!-- Progress bar -->
+    <div class="calc-progress reveal">
+      <div class="prog-step active" id="prog1">
+        <div class="prog-dot">1</div>
+        <div class="prog-label">Диаметр поршня</div>
+      </div>
+      <div class="prog-line" id="progLine"></div>
+      <div class="prog-step" id="prog2">
+        <div class="prog-dot">2</div>
+        <div class="prog-label">Полный расчёт</div>
+      </div>
+    </div>
+
+    <div class="calc-outer">
+      <div class="calc-stages">
+
+        <!-- ── ЭТАП 1 ── -->
+        <div class="stage reveal" id="stage1">
+          <div class="stage-head">
+            <div class="stage-num sn1">1</div>
+            <div>
+              <div class="stage-title">Подбор диаметра поршня</div>
+              <div style="font-size:13px;color:var(--muted);margin-top:2px">По усилию и рабочему давлению</div>
+            </div>
+          </div>
+          <div class="stage-body">
+            <div class="row-group">
+              <div class="row-group-label">Исходные данные</div>
+              <div class="param-row">
+                <div class="param-name">Необходимое усилие выдвижения</div>
+                <div class="param-inputs">
+                  <input class="ci" type="text" inputmode="decimal" id="s1_force" placeholder="напр. 50000" oninput="s1Calc()">
+                  <div class="toggle-wrap">
+                    <button class="toggle-btn on" id="btnN" onclick="setUnit('N')">Н</button>
+                    <button class="toggle-btn" id="btnKg" onclick="setUnit('kg')">кг</button>
+                  </div>
+                </div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Рабочее давление</div>
+                <div class="param-inputs">
+                  <input class="ci" type="text" inputmode="decimal" id="s1_pressure" placeholder="10–35" oninput="s1Calc()">
+                  <span class="unit">МПа</span>
+                </div>
+                <div class="param-hint">Мобильная техника: 10–16 МПа · Промышленность: 20–25 МПа · Высокое: 30–35 МПа</div>
+              </div>
+            </div>
+            <div class="row-group">
+              <div class="row-group-label">Результаты</div>
+              <div class="param-row">
+                <div class="param-name">Минимально необходимый диаметр</div>
+                <div class="param-inputs">
+                  <div class="cr" id="r_dmin">—</div>
+                  <span class="unit">мм</span>
+                </div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Стандартный диаметр по ГОСТ</div>
+                <div class="param-inputs">
+                  <div class="cr" id="r_dgost">—</div>
+                  <span class="unit">мм</span>
+                </div>
+              </div>
+            </div>
+            <div class="err-msg" id="s1_err">Введите положительные значения усилия и давления</div>
+            <div class="art-row" id="s1_art">
+              <div>
+                <div class="art-code" id="s1_art_code">—</div>
+                <div class="art-label">Предварительный артикул (без хода)</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:13px;color:var(--muted)">Уточните ход штока в Этапе 2</div>
+                <button onclick="goStage2()" style="margin-top:8px;padding:8px 18px;border-radius:50px;background:linear-gradient(135deg,var(--orange),var(--orange-dk));color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;">Перейти к Этапу 2 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="stage-arrow reveal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          <span>данные переходят в Этап 2</span>
+        </div>
+
+        <!-- ── ЭТАП 2 ── -->
+        <div class="stage reveal" id="stage2">
+          <div class="stage-head">
+            <div class="stage-num sn2">2</div>
+            <div>
+              <div class="stage-title">Полный расчёт параметров</div>
+              <div style="font-size:13px;color:var(--muted);margin-top:2px">Объёмы, подача насоса, усилия, артикул</div>
+            </div>
+          </div>
+          <div class="stage-body">
+            <!-- Stage 1 summary -->
+            <div class="s1-summary" id="s1Summary">
+              <span class="s1-sum-tag">Из шага 1</span>
+              <span class="s1-sum-val">Гильза: <b id="sumD">—</b> мм</span>
+              <span class="s1-sum-val">Давление: <b id="sumP">—</b> МПа</span>
+              <button class="s1-sum-edit" onclick="goStage1()">← Изменить</button>
+            </div>
+            <button class="btn-back" onclick="goStage1()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+              Назад к шагу 1
+            </button>
+            <div class="row-group">
+              <div class="row-group-label">Исходные данные</div>
+              <div class="param-row">
+                <div class="param-name">Диаметр гильзы (D)</div>
+                <div class="param-inputs">
+                  <input class="ci prefilled" type="text" inputmode="decimal" id="s2_D" placeholder="32–320" oninput="s2Calc()">
+                  <span class="unit">мм</span>
+                </div>
+                <div class="param-hint">Перенесён из шага 1. Ряд ГОСТ: 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Диаметр штока (d)</div>
+                <div class="param-inputs">
+                  <input class="ci prefilled" type="text" inputmode="decimal" id="s2_d" placeholder="20–200" oninput="s2Calc()">
+                  <span class="unit">мм</span>
+                </div>
+                <div class="param-hint">Типовое соотношение d/D ≈ 0.56–0.63. Ряд: 20, 25, 32, 40, 50, 63, 80, 100, 125</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Ход цилиндра (L)</div>
+                <div class="param-inputs">
+                  <input class="ci" type="text" inputmode="decimal" id="s2_L" placeholder="напр. 300" oninput="s2Calc()">
+                  <span class="unit">мм</span>
+                </div>
+                <div class="param-hint">Расстояние полного выдвижения штока. Из чертежа механизма или технического задания.</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Время выдвижения (t)</div>
+                <div class="param-inputs">
+                  <input class="ci" type="text" inputmode="decimal" id="s2_t" placeholder="напр. 5" oninput="s2Calc()">
+                  <span class="unit">сек</span>
+                </div>
+                <div class="param-hint">Желаемое время полного хода. Типовые: 2–5 сек (быстрые), 5–15 сек (стандарт).</div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Рабочее давление (P)</div>
+                <div class="param-inputs">
+                  <input class="ci prefilled" type="text" inputmode="decimal" id="s2_P" placeholder="10–35" oninput="s2Calc()">
+                  <span class="unit">МПа</span>
+                </div>
+              </div>
+            </div>
+            <div id="s2_err" class="err-msg"></div>
+            <div class="row-group" id="s2_results" style="display:none">
+              <div class="row-group-label">Результаты расчёта</div>
+              <div class="param-row">
+                <div class="param-name">Объём поршневой полости</div>
+                <div class="param-inputs"><div class="cr" id="r_vp">—</div><span class="unit">л</span></div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Объём штоковой полости</div>
+                <div class="param-inputs"><div class="cr" id="r_vs">—</div><span class="unit">л</span></div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Необходимая подача насоса</div>
+                <div class="param-inputs"><div class="cr" id="r_q">—</div><span class="unit">л/мин</span></div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Время втягивания</div>
+                <div class="param-inputs"><div class="cr" id="r_tret">—</div><span class="unit">сек</span></div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Толкающее усилие</div>
+                <div class="param-inputs"><div class="cr" id="r_fp_n">—</div><span class="unit">Н</span><span class="unit" style="margin:0 4px">/</span><div class="cr" id="r_fp_kg" style="width:80px">—</div><span class="unit">кг</span></div>
+              </div>
+              <div class="param-row">
+                <div class="param-name">Тянущее усилие</div>
+                <div class="param-inputs"><div class="cr" id="r_ft_n">—</div><span class="unit">Н</span><span class="unit" style="margin:0 4px">/</span><div class="cr" id="r_ft_kg" style="width:80px">—</div><span class="unit">кг</span></div>
+              </div>
+            </div>
+            <!-- Full article + actions -->
+            <div class="art-row" id="s2_art">
+              <div>
+                <div class="art-code" id="s2_art_code">—</div>
+                <div class="art-label">Артикул гидроцилиндра по ГОСТ</div>
+                <div class="art-deadline">Срок изготовления: стандарт 7–10 дней · срочно 3–5 дней</div>
+              </div>
+            </div>
+            <div class="result-actions" id="resultActions" style="display:none">
+              <button class="btn-copy" id="btnCopy" onclick="copyFull()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                Скопировать
+              </button>
+              <button class="btn-print" onclick="window.print()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Распечатать
+              </button>
+              <button class="btn-kp" onclick="sendToForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Получить КП на этот цилиндр
+              </button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /calc-stages -->
+
+      <!-- SVG Diagram panel -->
+      <div class="diag-panel reveal">
+        <div class="diag-title">Схема гидроцилиндра</div>
+        <svg class="diag-svg" viewBox="0 0 332 185" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="45" width="208" height="12" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="40" y="145" width="208" height="12" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="40" y="45" width="14" height="112" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="234" y="45" width="14" height="112" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <line x1="22" y1="57" x2="22" y2="145" stroke="#06b6d4" stroke-width="1.5"/>
+          <line x1="16" y1="57" x2="28" y2="57" stroke="#06b6d4" stroke-width="1.5"/>
+          <line x1="16" y1="145" x2="28" y2="145" stroke="#06b6d4" stroke-width="1.5"/>
+          <text x="10" y="105" fill="#06b6d4" font-size="12" font-family="Arial" font-weight="700" text-anchor="middle">D</text>
+          <rect id="diag_hole" x="234" y="79" width="14" height="44" fill="#060810"/>
+          <rect id="diag_rod" x="138" y="79" width="162" height="44" rx="3" fill="#1f3d5c" stroke="rgba(148,163,184,.3)" stroke-width="1.5"/>
+          <rect id="diag_rod_hl" x="138" y="79" width="162" height="5" rx="2" fill="rgba(255,255,255,.08)"/>
+          <rect x="178" y="48" width="20" height="106" rx="3" fill="#0e1e35" stroke="rgba(6,182,212,.4)" stroke-width="1.5"/>
+          <line x1="182" y1="62" x2="194" y2="62" stroke="#f97316" stroke-width="1.5"/>
+          <line x1="182" y1="70" x2="194" y2="70" stroke="#f97316" stroke-width="1.5"/>
+          <line x1="182" y1="132" x2="194" y2="132" stroke="#f97316" stroke-width="1.5"/>
+          <line x1="182" y1="140" x2="194" y2="140" stroke="#f97316" stroke-width="1.5"/>
+          <line id="diag_d_line" x1="307" y1="79" x2="307" y2="123" stroke="#f97316" stroke-width="1.5"/>
+          <line id="diag_d_top" x1="302" y1="79" x2="312" y2="79" stroke="#f97316" stroke-width="1.5"/>
+          <line id="diag_d_bot" x1="302" y1="123" x2="312" y2="123" stroke="#f97316" stroke-width="1.5"/>
+          <text id="diag_d_label" x="315" y="105" fill="#f97316" font-size="12" font-family="Arial" font-weight="700" text-anchor="start">d</text>
+          <line x1="54" y1="167" x2="234" y2="167" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="54" y1="162" x2="54" y2="172" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="234" y1="162" x2="234" y2="172" stroke="#a78bfa" stroke-width="1.5"/>
+          <polyline points="59,163 54,167 59,171" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="229,163 234,167 229,171" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="144" y="181" fill="#a78bfa" font-size="10" font-family="Arial" font-weight="700" text-anchor="middle">L — ход штока</text>
+        </svg>
+        <div class="diag-legend">
+          <div class="diag-row"><div class="diag-dot" style="background:#06b6d4"></div><span class="diag-name">D — диаметр гильзы</span><span class="diag-val" id="leg_D">—</span></div>
+          <div class="diag-row"><div class="diag-dot" style="background:#f97316"></div><span class="diag-name">d — диаметр штока</span><span class="diag-val" id="leg_d">—</span></div>
+          <div class="diag-row"><div class="diag-dot" style="background:#a78bfa"></div><span class="diag-name">L — ход штока</span><span class="diag-val" id="leg_L">—</span></div>
+          <div class="diag-row"><div class="diag-dot" style="background:#4ade80"></div><span class="diag-name">t — время выдвижения</span><span class="diag-val" id="leg_t">—</span></div>
+          <div class="diag-row"><div class="diag-dot" style="background:#f43f5e"></div><span class="diag-name">P — давление</span><span class="diag-val" id="leg_P">—</span></div>
+        </div>
+      </div>
+    </div><!-- /calc-outer -->
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="section section-alt" id="how">
+  <div class="section-inner">
+    <div class="section-tag reveal">Процесс</div>
+    <h2 class="section-title reveal">Как <span class="grad">мы работаем</span></h2>
+    <p class="section-sub reveal">От заявки до отгрузки — без лишних шагов и ожиданий</p>
+    <div class="steps stagger">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-title">Заявка</div>
+        <div class="step-text">Заполняете форму или звоните. Можно прислать результат расчёта из калькулятора — одной кнопкой.</div>
+        <div class="step-note">Отвечает инженер, не менеджер</div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <div class="step-title">Звонок инженера</div>
+        <div class="step-text">Уточняем параметры, предлагаем оптимальное решение. Подписываем NDA, если нужна конфиденциальность чертежей.</div>
+        <div class="step-note">В течение 2 часов в рабочее время</div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <div class="step-title">КП и согласование</div>
+        <div class="step-text">Смета в течение 1 рабочего дня. Согласуем параметры письменно — никаких устных договорённостей.</div>
+        <div class="step-note">Смета бесплатно</div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <div class="step-title">Производство и доставка</div>
+        <div class="step-text">Стандарт: 7–10 рабочих дней. Срочно: 3–5 дней. Доставка по всей России — транспортной компанией или самовывоз.</div>
+        <div class="step-note">С паспортом и актом испытаний</div>
+      </div>
+    </div>
+    <div style="margin-top:36px;padding:20px 28px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:16px;font-size:14px;color:var(--muted);max-width:600px;" class="reveal">
+      <strong style="color:var(--cyan)">Не знаете параметры?</strong> Опишите задачу словами — наш инженер рассчитает сам и перезвонит в рабочее время.
+    </div>
+  </div>
+</section>
+
+<!-- ══ PROJECTS ══ -->
+<section class="section" id="projects">
+  <div class="section-inner">
+    <div class="section-tag reveal">Опыт</div>
+    <h2 class="section-title reveal">Реализованные <span class="grad">проекты</span></h2>
+    <p class="section-sub reveal">Примеры задач, которые мы уже решали — с параметрами и результатами</p>
+    <div class="projects-grid stagger">
+      <div class="proj-card reveal">
+        <div class="proj-img" style="background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(6,182,212,.08))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="1.5" opacity="0.7"><rect x="2" y="8" width="20" height="12" rx="2"/><path d="M6 8V6a2 2 0 012-2h8a2 2 0 012 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+          <div class="proj-tag">Металлургия</div>
+        </div>
+        <div class="proj-body">
+          <div class="proj-title">Гидравлический пресс 200 т</div>
+          <div class="proj-row"><span class="proj-row-label">Задача:</span><span class="proj-row-val">Нестандартный ход 850 мм, давление 25 МПа, работа в условиях высокой температуры</span></div>
+          <div class="proj-row"><span class="proj-row-label">Решение:</span><span class="proj-row-val">Сталь 45, хромовое покрытие штока, уплотнения Trelleborg, паспорт ПБ</span></div>
+          <div class="proj-row"><span class="proj-row-label">Результат:</span><span class="proj-row-val">Срок 12 дней. Работает 3 года без замены уплотнений. Клиент заказал ещё 4 ед.</span></div>
+          <div class="proj-article">ГЦ-160/100-850</div>
+        </div>
+      </div>
+      <div class="proj-card reveal">
+        <div class="proj-img" style="background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(234,88,12,.06))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.7"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 6v6l4 2"/></svg>
+          <div class="proj-tag">Сельхозтехника</div>
+        </div>
+        <div class="proj-body">
+          <div class="proj-title">Подъёмный механизм культиватора</div>
+          <div class="proj-row"><span class="proj-row-label">Задача:</span><span class="proj-row-val">Замена импортного цилиндра, аналог под отечественное давление 16 МПа</span></div>
+          <div class="proj-row"><span class="proj-row-label">Решение:</span><span class="proj-row-val">Полный аналог по посадочным местам, хонинговка гильзы, уплотнения SKF</span></div>
+          <div class="proj-row"><span class="proj-row-label">Результат:</span><span class="proj-row-val">Замена без доработки рамы. Сезон без отказов. Поставка в 3 хозяйства.</span></div>
+          <div class="proj-article">ГЦ-80/50-400</div>
+        </div>
+      </div>
+      <div class="proj-card reveal">
+        <div class="proj-img" style="background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(168,85,247,.07))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.7"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div class="proj-tag">Горное оборудование</div>
+        </div>
+        <div class="proj-body">
+          <div class="proj-title">Опрокидыватель вагонеток</div>
+          <div class="proj-row"><span class="proj-row-label">Задача:</span><span class="proj-row-val">Работа в шахте, взрывобезопасное исполнение, ход 600 мм, усилие 120 кН</span></div>
+          <div class="proj-row"><span class="proj-row-label">Решение:</span><span class="proj-row-val">Нержавеющие уплотнения, антикоррозийное покрытие, документация для горнадзора</span></div>
+          <div class="proj-row"><span class="proj-row-label">Результат:</span><span class="proj-row-val">Прошёл приёмку ростехнадзора с первого раза. Работает без ТО 18 месяцев.</span></div>
+          <div class="proj-article">ГЦ-125/80-600</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WHY US ══ -->
+<section class="section section-alt" id="why">
+  <div class="section-inner">
+    <div class="section-tag reveal">Преимущества</div>
+    <h2 class="section-title reveal">Почему <span class="grad">выбирают нас</span></h2>
+    <p class="section-sub reveal">То, что важно инженеру — а не маркетинговые слоганы</p>
+    <div class="why-grid stagger">
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="why-title">Любые нестандартные размеры</div>
+        <div class="why-text">Изготавливаем по чертежам заказчика. Не ограничены каталогом — собственное производство.</div>
+        <div class="why-vs"><span class="why-us">✓ Любые параметры</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">Только из каталога</span></div>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="why-title">Срок 7–10 дней</div>
+        <div class="why-text">Стандарт: 7–10 рабочих дней. Срочный заказ — от 3 дней. Против 30–60 дней у крупных заводов.</div>
+        <div class="why-vs"><span class="why-us">✓ 7–10 дней</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">30–60 дней</span></div>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div class="why-title">Инженер напрямую</div>
+        <div class="why-text">Отвечает инженер с опытом 10+ лет. Не менеджер, который переспрашивает коллег.</div>
+        <div class="why-vs"><span class="why-us">✓ Инженер сразу</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">Через менеджера</span></div>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="why-title">От 1 штуки</div>
+        <div class="why-text">Минимальный заказ — 1 единица. Малые серии и штучные изделия — наш профиль.</div>
+        <div class="why-vs"><span class="why-us">✓ От 1 шт.</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">От партии</span></div>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <div class="why-title">NDA по запросу</div>
+        <div class="why-text">Подписываем соглашение о конфиденциальности до обсуждения чертежей. Без лишних вопросов.</div>
+        <div class="why-vs"><span class="why-us">✓ Подписываем NDA</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">По запросу</span></div>
+      </div>
+      <div class="why-card reveal">
+        <div class="why-icon" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="why-title">Документация в комплекте</div>
+        <div class="why-text">Паспорт изделия + акт гидравлических испытаний + сертификаты на материалы. Всё для госзакупок.</div>
+        <div class="why-vs"><span class="why-us">✓ Полный комплект</span><span style="margin:0 8px;color:var(--muted)">vs</span><span class="why-them">По дополнительному запросу</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CERTIFICATES ══ -->
+<section class="section" style="background:linear-gradient(180deg,transparent,rgba(6,182,212,.03),transparent)">
+  <div class="section-inner">
+    <div class="section-tag reveal">Качество</div>
+    <h2 class="section-title reveal">Качество, которое <span class="grad">можно проверить</span></h2>
+    <p class="section-sub reveal">Каждый цилиндр испытывается перед отгрузкой — не на словах, а с актом</p>
+    <div class="cert-grid stagger">
+      <div class="cert-card reveal">
+        <div class="cert-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="cert-title">ГОСТ 3822-79</div>
+        <div class="cert-text">Гидроцилиндры объёмных гидроприводов. Каждое изделие соответствует стандарту.</div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div class="cert-title">Испытание 150%</div>
+        <div class="cert-text">Каждый цилиндр испытывается при давлении 150% от рабочего. С составлением акта испытаний.</div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="cert-title">Документация</div>
+        <div class="cert-text">Паспорт изделия, акт гидравлических испытаний, сертификаты на металл и уплотнения.</div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+        <div class="cert-title">Гарантия 2 года</div>
+        <div class="cert-text">На уплотнения и детали при соблюдении условий эксплуатации. ТР ТС 010/2011.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FAQ ══ -->
+<section class="section section-alt" id="faq">
+  <div class="section-inner">
+    <div class="section-tag reveal">Вопросы</div>
+    <h2 class="section-title reveal">Часто <span class="grad">спрашивают</span></h2>
+    <p class="section-sub reveal">Отвечаем честно — без уклончивых формулировок</p>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Сколько стоит гидроцилиндр?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Стандартные позиции (диаметры 32–100 мм, ход до 500 мм) — <strong>от 4 500 ₽</strong>. Нестандартные и крупные — <strong>от 12 000 ₽</strong>. Точная смета бесплатно в течение 1 рабочего дня после заявки. Звонить необязательно — можно через форму на сайте.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Нужно срочно — сможете?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Стандартные позиции обычно есть в наличии — отправка в день заказа. Нестандартные: срочный заказ от <strong>3 рабочих дней</strong>, стандартный — 7–10. Уточните при оформлении заявки — скажем точный срок сразу.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Откуда гарантия качества?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Каждый цилиндр испытывается при <strong>150% рабочего давления</strong> перед отгрузкой. Вы получаете паспорт изделия и акт испытаний. Гарантия — 2 года на уплотнения и детали. За 15 лет работы — менее 0.5% возвратов.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Вы небольшая компания — справитесь с объёмом?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner"><strong>15 лет на рынке, 1200+ проектов</strong>, собственный станочный парк. Выполняем заказы от 1 штуки до серий по 200+ единиц. Среди клиентов — предприятия с госзакупками и крупные промышленные холдинги.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Чертежи — это конфиденциально. Как быть?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Подписываем <strong>NDA до начала обсуждения</strong>. Чертежи хранятся без права передачи третьим лицам. Документ высылаем в день обращения — просто скажите об этом в заявке.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Нужна документация для госзакупки или приёмки<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">В стандартный комплект входит: <strong>паспорт изделия, акт гидравлических испытаний, сертификаты на металл и уплотнения</strong>. При необходимости — дополнительная документация под конкретные требования ростехнадзора или заказчика.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Я не знаю точных параметров — что делать?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Воспользуйтесь <strong>калькулятором на этой странице</strong> — введите усилие и давление, и он подберёт диаметр. Или опишите задачу словами в форме заявки: «нужен цилиндр для пресса 50 тонн, ход примерно 400 мм» — инженер рассчитает и перезвонит.</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">Как проверить, что цилиндр подойдёт к моему оборудованию?<div class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></button>
+        <div class="faq-a"><div class="faq-a-inner">Пришлите чертёж или фото старого цилиндра — проверим посадочные места до производства. Согласуем параметры письменно. Если цилиндр не подойдёт по нашей вине — переделаем бесплатно.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEEDBACK FORM ══ -->
+<section class="section" id="feedback" style="padding-top:60px;padding-bottom:60px">
+  <div class="section-inner">
+    <div class="feedback-wrap">
+      <div style="text-align:center;margin-bottom:32px">
+        <div class="section-tag reveal" style="margin:0 auto 16px;display:inline-flex">Написать нам</div>
+        <h2 class="section-title reveal">Быстрое <span class="grad">сообщение</span></h2>
+        <p style="color:var(--muted);font-size:15px;margin-top:8px" class="reveal">Опишите задачу в свободной форме — ответим в рабочее время</p>
+      </div>
+      <div class="feedback-card reveal">
+        <div id="fbForm">
+          <div class="fb-grid">
+            <div class="fb-field">
+              <label>Имя</label>
+              <input type="text" id="fb_name" placeholder="Иван Петров">
+              <span class="fb-ferr" id="fberr_name">Укажите имя</span>
+            </div>
+            <div class="fb-field">
+              <label>Email</label>
+              <input type="email" id="fb_email" placeholder="ivan@zavod.ru">
+              <span class="fb-ferr" id="fberr_email">Введите корректный email</span>
+            </div>
+          </div>
+          <div class="fb-field fb-msg">
+            <label>Сообщение</label>
+            <textarea id="fb_msg" rows="4" placeholder="Опишите задачу или вопрос — параметры цилиндра, объём партии, сроки..."></textarea>
+            <span class="fb-ferr" id="fberr_msg">Напишите сообщение</span>
+          </div>
+          <button class="btn-fb-send" id="btnFbSend" onclick="submitFeedback(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right:8px;vertical-align:middle"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Отправить сообщение
+          </button>
+        </div>
+        <div class="fb-success" id="fbSuccess">
+          <div class="confetti-container" id="confettiBox"></div>
+          <div class="fb-success-ring">
+            <svg viewBox="0 0 80 80" fill="none">
+              <circle class="fb-ring-bg" cx="40" cy="40" r="36" stroke-width="4"/>
+              <circle class="fb-ring-prog" cx="40" cy="40" r="36" stroke-width="4" transform="rotate(-90 40 40)"/>
+            </svg>
+            <svg viewBox="0 0 80 80" fill="none" style="position:absolute;inset:0">
+              <polyline class="fb-check" points="22,42 35,55 58,28" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3 style="font-size:24px;margin-bottom:8px">Сообщение отправлено!</h3>
+          <p style="color:var(--muted);font-size:14px;line-height:1.7">Ответим в рабочее время (Пн–Пт 8:30–17:00).<br>Если нужен срочный ответ — позвоните: <a href="tel:+73412775704" style="color:var(--orange)">+7 (3412) 77-57-04</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA FORM ══ -->
+<section class="section" id="contacts">
+  <div class="section-inner">
+    <div class="cta-box reveal">
+      <div class="cta-left">
+        <div class="section-tag" style="margin-bottom:16px">Заявка</div>
+        <h2>Получите КП<br>за <span class="grad">1 рабочий день</span></h2>
+        <p>Ответит инженер с опытом 10+ лет — не менеджер по продажам. Смета бесплатно.</p>
+        <div class="cta-trust">
+          <div class="cta-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Инженер перезвонит в течение 2 часов</div>
+          <div class="cta-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>NDA по запросу — до обсуждения чертежей</div>
+          <div class="cta-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Смета и КП — бесплатно, без обязательств</div>
+          <div class="cta-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Паспорт + акт испытаний в комплекте</div>
+        </div>
+        <div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--border)">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Или позвоните напрямую:</div>
+          <a href="tel:+73412775704" style="display:block;font-size:20px;font-weight:700;color:var(--text);text-decoration:none;margin-bottom:4px">+7 (3412) 77-57-04</a>
+          <a href="tel:88004447065" style="display:block;font-size:14px;color:var(--orange);text-decoration:none">8 (800) 444-70-65 — бесплатно</a>
+          <div style="font-size:13px;color:var(--muted);margin-top:6px">Пн–Пт 8:30–17:00 · В выходные — ответим в понедельник</div>
+        </div>
+      </div>
+      <div class="cta-right">
+        <div id="formWrap">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Имя и должность</label>
+              <input type="text" id="f_name" placeholder="Иван, главный механик">
+              <div class="ferr" id="ferr_name">Пожалуйста, укажите имя</div>
+            </div>
+            <div class="form-field">
+              <label>Компания</label>
+              <input type="text" id="f_company" placeholder="ООО «Завод»">
+            </div>
+            <div class="form-field">
+              <label>Что нужно</label>
+              <textarea id="f_task" rows="3" placeholder="ГЦ-80/50-300 или опишите задачу словами..."></textarea>
+              <div class="ferr" id="ferr_task">Опишите задачу или укажите артикул</div>
+            </div>
+            <div class="form-field">
+              <label>Телефон</label>
+              <input type="tel" id="f_phone" placeholder="+7 (___) ___-__-__">
+              <div class="ferr" id="ferr_phone">Введите корректный номер телефона</div>
+            </div>
+            <div class="form-field">
+              <label>Когда нужно</label>
+              <div class="urgency-row">
+                <button class="urgency-btn" onclick="setUrgency(this,'Срочно (до 5 дней)')">Срочно</button>
+                <button class="urgency-btn" onclick="setUrgency(this,'В течение месяца')">В течение месяца</button>
+                <button class="urgency-btn" onclick="setUrgency(this,'Планирую заранее')">Планирую</button>
+              </div>
+            </div>
+            <button class="btn-submit" onclick="submitForm()">Получить КП</button>
+            <div class="form-note">Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.<br>Спам не рассылаем. Данные не передаём третьим лицам.</div>
+          </div>
+        </div>
+        <div class="form-success" id="formSuccess">
+          <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <h3>Заявка принята!</h3>
+          <p>Инженер перезвонит в рабочее время (Пн–Пт 8:30–17:00).<br>Если отправили в выходной — ответим в понедельник.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-about">
+      <svg viewBox="0 0 260 38" xmlns="http://www.w3.org/2000/svg" style="height:28px;display:block;">
+        <polygon points="15,4 27,4 33,15 27,26 15,26 9,15" fill="none" stroke="#f97316" stroke-width="2"/>
+        <text x="15" y="19" font-family="Arial Black,Arial,sans-serif" font-size="10" font-weight="900" fill="#f97316" text-anchor="middle" dominant-baseline="middle">ПГ</text>
+        <text x="42" y="12" font-family="Arial Black,Arial,sans-serif" font-size="11" font-weight="900" fill="#f1f5f9" letter-spacing="1">ПРОМГИДРАВЛИКА</text>
+        <text x="42" y="25" font-family="Arial,sans-serif" font-size="8" fill="#94a3b8" letter-spacing="1.5">ГРУППА КОМПАНИЙ</text>
+      </svg>
+      <p>Производство и подбор гидроцилиндров под заказ. 15 лет на рынке, 1200+ реализованных проектов.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Навигация</h4>
+      <a href="#calculator">Калькулятор</a>
+      <a href="#how">Как работаем</a>
+      <a href="#projects">Проекты</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contacts">Контакты</a>
+    </div>
+    <div class="footer-col">
+      <h4>Контакты</h4>
+      <a href="tel:+73412775704">+7 (3412) 77-57-04</a>
+      <a href="tel:88004447065">8 (800) 444-70-65 (бесплатно)</a>
+      <a href="mailto:info@p-gidravlika.ru">info@p-gidravlika.ru</a>
+      <p>Пн–Пт 8:30–17:00</p>
+      <a href="https://p-gidravlika.ru" target="_blank" style="color:var(--orange);margin-top:8px">p-gidravlika.ru →</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Промгидравлика · Группа компаний</span>
+    <a class="footer-site" href="https://p-gidravlika.ru" target="_blank">p-gidravlika.ru</a>
+  </div>
+</footer>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="modalForm">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg></div>
+      <h3>Заказать звонок</h3>
+      <p>Инженер перезвонит в рабочее время (Пн–Пт 8:30–17:00)</p>
+      <div class="modal-field"><label>Ваше имя</label><input type="text" id="m_name" placeholder="Иван"></div>
+      <div class="modal-field"><label>Телефон</label><input type="tel" id="m_phone" placeholder="+7 (___) ___-__-__"></div>
+      <button class="modal-submit" onclick="submitModal()">Заказать звонок</button>
+      <div class="modal-note">Перезвоним в течение 2 часов</div>
+    </div>
+    <div class="modal-success" id="modalSuccess">
+      <div class="success-icon" style="margin:0 auto 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3 style="margin-bottom:8px">Отлично!</h3>
+      <p style="color:var(--muted);font-size:14px">Инженер перезвонит в рабочее время.<br>Пн–Пт 8:30–17:00.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FLOATING CALL ══ -->
+<div class="float-call" onclick="openModal()">
+  <div class="float-label">Заказать звонок</div>
+  <button class="float-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+  </button>
+</div>
+
+<!-- ══ BACK TO TOP ══ -->
+<button class="back-top" id="backTop" onclick="scrollToTop()" aria-label="Наверх">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+  // ── CONSTANTS ──
+  var GOST_D = [32,40,50,63,80,100,125,160,200,250,320];
+  var forceUnit = 'N';
+  var urgencyVal = '';
+
+  // ── HELPERS ──
+  function pn(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function setEl(id, val, cls) {
+    var el = document.getElementById(id); if (!el) return;
+    el.textContent = val;
+    el.className = 'cr' + (cls ? ' ' + cls : '');
+  }
+  function fmt(v, d) { return v.toFixed(d !== undefined ? d : 1); }
+  function gostD(dMin) { for (var i=0;i<GOST_D.length;i++) { if (GOST_D[i] >= dMin) return GOST_D[i]; } return null; }
+
+  // ── UNIT TOGGLE ──
+  function setUnit(u) {
+    forceUnit = u;
+    document.getElementById('btnN').className = 'toggle-btn' + (u==='N' ? ' on' : '');
+    document.getElementById('btnKg').className = 'toggle-btn' + (u==='kg' ? ' on' : '');
+    s1Calc();
+  }
+
+  // ── STAGE 1 ──
+  function s1Calc() {
+    var raw = pn('s1_force');
+    var F = forceUnit === 'kg' ? raw * 9.81 : raw;
+    var P = pn('s1_pressure');
+    var err = document.getElementById('s1_err');
+    var artRow = document.getElementById('s1_art');
+    if (!F || !P || F <= 0 || P <= 0) {
+      setEl('r_dmin','—'); setEl('r_dgost','—');
+      artRow.className = 'art-row'; err.className = 'err-msg';
+      return;
+    }
+    var dMin = Math.sqrt(4 * F / (Math.PI * P * 1e6)) * 1000;
+    var dGost = gostD(dMin);
+    if (!dGost) {
+      setEl('r_dmin', fmt(dMin,1)); setEl('r_dgost','> 320');
+      artRow.className = 'art-row'; err.textContent = 'Диаметр превышает стандартный ряд ГОСТ (макс. 320 мм). Свяжитесь с инженером.'; err.className = 'err-msg visible';
+      return;
+    }
+    err.className = 'err-msg';
+    setEl('r_dmin', fmt(dMin,1), 'filled');
+    setEl('r_dgost', dGost, 'filled-hi');
+    document.getElementById('s1_art_code').textContent = 'ГЦ-' + dGost + '/…';
+    artRow.className = 'art-row visible';
+    // Auto-fill stage 2
+    var d2D = document.getElementById('s2_D');
+    var d2P = document.getElementById('s2_P');
+    if (d2D && !d2D.dataset.manual) d2D.value = dGost;
+    if (d2P && !d2P.dataset.manual) d2P.value = P;
+    s2Calc();
+  }
+
+  // ── STAGE 2 ──
+  function s2Calc() {
+    var D = pn('s2_D'), d = pn('s2_d'), L = pn('s2_L'), t = pn('s2_t'), P = pn('s2_P');
+    var err = document.getElementById('s2_err');
+    var res = document.getElementById('s2_results');
+    var artRow = document.getElementById('s2_art');
+    var actions = document.getElementById('resultActions');
+    var ids = ['r_vp','r_vs','r_q','r_tret','r_fp_n','r_fp_kg','r_ft_n','r_ft_kg'];
+    updateDiagram(D, d, L, t, P);
+    if (!D || !d || !L || !t || !P) {
+      ids.forEach(function(i){setEl(i,'—')});
+      res.style.display = 'none'; artRow.className = 'art-row'; actions.style.display = 'none';
+      err.textContent = ''; err.className = 'err-msg'; return;
+    }
+    if (d >= D) {
+      ids.forEach(function(i){setEl(i,'—')});
+      res.style.display = 'none'; artRow.className = 'art-row'; actions.style.display = 'none';
+      err.textContent = 'Диаметр штока не может быть больше или равен диаметру гильзы (d < D)';
+      err.className = 'err-msg visible'; return;
+    }
+    err.className = 'err-msg';
+    var Dm = D/1000, dm = d/1000, Lm = L/1000;
+    var Vp = Math.PI * Math.pow(Dm/2,2) * Lm * 1000;
+    var Vs = Math.PI * (Math.pow(Dm/2,2) - Math.pow(dm/2,2)) * Lm * 1000;
+    var Q  = Vp / t * 60;
+    var tR = Vs / (Q/60);
+    var Fp = P*1e6 * Math.PI * Math.pow(Dm/2,2);
+    var Ft = P*1e6 * Math.PI * (Math.pow(Dm/2,2) - Math.pow(dm/2,2));
+    setEl('r_vp',  fmt(Vp,3),    'filled');
+    setEl('r_vs',  fmt(Vs,3),    'filled');
+    setEl('r_q',   fmt(Q,1),     'filled-hi');
+    setEl('r_tret',fmt(tR,1),    'filled');
+    setEl('r_fp_n',Math.round(Fp).toLocaleString('ru'),'filled-hi');
+    setEl('r_fp_kg',Math.round(Fp/9.81).toLocaleString('ru'),'filled');
+    setEl('r_ft_n',Math.round(Ft).toLocaleString('ru'),'filled');
+    setEl('r_ft_kg',Math.round(Ft/9.81).toLocaleString('ru'),'filled');
+    var art = 'ГЦ-' + D + '/' + d + '-' + L;
+    document.getElementById('s2_art_code').textContent = art;
+    artRow.className = 'art-row visible';
+    res.style.display = 'block';
+    actions.style.display = 'flex';
+    // Update stage 1 summary
+    var sumD = document.getElementById('sumD');
+    var sumP = document.getElementById('sumP');
+    if (sumD) sumD.textContent = D;
+    if (sumP) sumP.textContent = P;
+    document.getElementById('s1Summary').className = 's1-summary visible';
+    // Progress
+    setProg2();
+  }
+
+  // ── DIAGRAM ──
+  function updateDiagram(D, d, L, t, P) {
+    var el = function(id) { return document.getElementById(id); };
+    var lD = el('leg_D'), ld = el('leg_d'), lL = el('leg_L'), lt = el('leg_t'), lP = el('leg_P');
+    if (lD) lD.textContent = D > 0 ? D + ' мм' : '—';
+    if (ld) ld.textContent = d > 0 ? d + ' мм' : '—';
+    if (lL) lL.textContent = L > 0 ? L + ' мм' : '—';
+    if (lt) lt.textContent = t > 0 ? t + ' сек' : '—';
+    if (lP) lP.textContent = P > 0 ? P + ' МПа' : '—';
+    if (D > 0 && d > 0 && d < D) {
+      var iH=88, cY=101;
+      var rH = Math.max(8, Math.round(iH * d / D));
+      var rY = Math.round(cY - rH/2);
+      var s = function(id, attrs) { var e=el(id); if(!e) return; Object.keys(attrs).forEach(function(k){e.setAttribute(k,attrs[k]);}); };
+      s('diag_rod',    {y:rY, height:rH});
+      s('diag_rod_hl', {y:rY});
+      s('diag_hole',   {y:rY, height:rH});
+      s('diag_d_line', {y1:rY, y2:rY+rH});
+      s('diag_d_top',  {y1:rY, y2:rY});
+      s('diag_d_bot',  {y1:rY+rH, y2:rY+rH});
+      var dl = el('diag_d_label');
+      if (dl) dl.setAttribute('y', rY + Math.round(rH/2) + 5);
+    }
+  }
+
+  // ── PROGRESS ──
+  function setProg1() {
+    document.getElementById('prog1').className = 'prog-step active';
+    document.getElementById('prog2').className = 'prog-step';
+    document.getElementById('progLine').className = 'prog-line';
+  }
+  function setProg2() {
+    document.getElementById('prog1').className = 'prog-step done';
+    document.getElementById('prog1').querySelector('.prog-dot').textContent = '✓';
+    document.getElementById('prog2').className = 'prog-step active';
+    document.getElementById('progLine').className = 'prog-line filled';
+  }
+
+  // ── NAVIGATION ──
+  function goStage2() {
+    document.getElementById('stage1').style.opacity = '.5';
+    document.getElementById('stage1').style.pointerEvents = 'none';
+    document.getElementById('stage2').scrollIntoView({behavior:'smooth', block:'start'});
+    setTimeout(function() {
+      document.getElementById('stage1').style.opacity = '';
+      document.getElementById('stage1').style.pointerEvents = '';
+    }, 800);
+  }
+  function goStage1() {
+    document.getElementById('stage1').scrollIntoView({behavior:'smooth', block:'start'});
+    setProg1();
+  }
+
+  // ── COPY ──
+  function copyFull() {
+    var D = document.getElementById('s2_D').value;
+    var d = document.getElementById('s2_d').value;
+    var L = document.getElementById('s2_L').value;
+    var t = document.getElementById('s2_t').value;
+    var P = document.getElementById('s2_P').value;
+    var art = document.getElementById('s2_art_code').textContent;
+    var lines = [
+      '=== Расчёт гидроцилиндра · Промгидравлика ===',
+      '',
+      '[ Параметры ]',
+      'Диаметр гильзы (D):  ' + D + ' мм',
+      'Диаметр штока (d):   ' + d + ' мм',
+      'Ход (L):             ' + L + ' мм',
+      'Время выдвижения:    ' + t + ' сек',
+      'Давление (P):        ' + P + ' МПа',
+      '',
+      '[ Результаты ]',
+      'Объём поршневой:     ' + document.getElementById('r_vp').textContent + ' л',
+      'Объём штоковой:      ' + document.getElementById('r_vs').textContent + ' л',
+      'Подача насоса:       ' + document.getElementById('r_q').textContent + ' л/мин',
+      'Время втягивания:    ' + document.getElementById('r_tret').textContent + ' сек',
+      'Толкающее усилие:    ' + document.getElementById('r_fp_n').textContent + ' Н',
+      '',
+      'Артикул: ' + art,
+      'Срок: стандарт 7–10 дней, срочно 3–5 дней',
+      '',
+      'Дата: ' + new Date().toLocaleDateString('ru'),
+      'Рассчитано: p-gidravlika.ru · +7 (3412) 77-57-04'
+    ];
+    var btn = document.getElementById('btnCopy');
+    navigator.clipboard.writeText(lines.join('\n')).then(function() {
+      btn.textContent = '✓ Скопировано!';
+      btn.style.color = 'var(--green)';
+      setTimeout(function() { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Скопировать'; btn.style.color = ''; }, 2500);
+    }).catch(function() {
+      btn.textContent = 'Ошибка копирования';
+    });
+  }
+
+  // ── SEND TO FORM ──
+  function sendToForm() {
+    var art = document.getElementById('s2_art_code').textContent;
+    var task = document.getElementById('f_task');
+    if (task) task.value = art + ' — рассчитано на сайте';
+    document.getElementById('contacts').scrollIntoView({behavior:'smooth'});
+  }
+
+  // ── MANUAL INPUT FLAG ──
+  document.addEventListener('DOMContentLoaded', function() {
+    ['s2_D','s2_d','s2_P'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function() { this.dataset.manual = '1'; s2Calc(); });
+    });
+  });
+
+  // ── URGENCY ──
+  function setUrgency(btn, val) {
+    document.querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
+    btn.className = 'urgency-btn selected';
+    urgencyVal = val;
+  }
+
+  // ── FORM SUBMIT ──
+  function submitForm() {
+    var name = document.getElementById('f_name').value.trim();
+    var task = document.getElementById('f_task').value.trim();
+    var phone = document.getElementById('f_phone').value.trim();
+    var ok = true;
+    if (!name) { document.getElementById('f_name').className='form-field-input err'; document.getElementById('ferr_name').className='ferr show'; ok=false; }
+    else { document.getElementById('f_name').className=''; document.getElementById('ferr_name').className='ferr'; }
+    if (!task) { document.getElementById('f_task').className='form-field-input err'; document.getElementById('ferr_task').className='ferr show'; ok=false; }
+    else { document.getElementById('f_task').className=''; document.getElementById('ferr_task').className='ferr'; }
+    if (!phone || phone.replace(/\D/g,'').length < 10) { document.getElementById('f_phone').className='form-field-input err'; document.getElementById('ferr_phone').className='ferr show'; ok=false; }
+    else { document.getElementById('f_phone').className=''; document.getElementById('ferr_phone').className='ferr'; }
+    if (!ok) return;
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('formSuccess').className = 'form-success show';
+  }
+
+  // ── MODAL ──
+  function openModal() { document.getElementById('modalOverlay').className = 'modal-overlay open'; document.body.style.overflow = 'hidden'; }
+  function closeModal() { document.getElementById('modalOverlay').className = 'modal-overlay'; document.body.style.overflow = ''; }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+  function submitModal() {
+    var name = document.getElementById('m_name').value.trim();
+    var phone = document.getElementById('m_phone').value.trim();
+    if (!name || !phone || phone.replace(/\D/g,'').length < 10) return;
+    document.getElementById('modalForm').style.display = 'none';
+    document.getElementById('modalSuccess').className = 'modal-success show';
+    setTimeout(closeModal, 3000);
+  }
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+  // ── MOBILE MENU ──
+  function openMob() { document.getElementById('mobOverlay').className = 'mob-overlay open'; document.body.style.overflow = 'hidden'; }
+  function closeMob() { document.getElementById('mobOverlay').className = 'mob-overlay'; document.body.style.overflow = ''; }
+
+  // ── PHONE MASK ──
+  function phoneMask(input) {
+    input.addEventListener('input', function() {
+      var v = this.value.replace(/\D/g,'');
+      if (v.startsWith('8')) v = '7' + v.slice(1);
+      if (!v.startsWith('7')) v = '7' + v;
+      v = v.slice(0,11);
+      var res = '+7';
+      if (v.length > 1) res += ' (' + v.slice(1,4);
+      if (v.length >= 4) res += ') ' + v.slice(4,7);
+      if (v.length >= 7) res += '-' + v.slice(7,9);
+      if (v.length >= 9) res += '-' + v.slice(9,11);
+      this.value = res;
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    phoneMask(document.getElementById('f_phone'));
+    phoneMask(document.getElementById('m_phone'));
+  });
+
+  // ── SCROLL REVEAL ──
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+  });
+
+  // ── COUNTER ANIMATION ──
+  function animateCounter(el, target, suffix) {
+    var start = 0, dur = 1800, step = 16;
+    var inc = target / (dur / step);
+    var t = setInterval(function() {
+      start += inc;
+      if (start >= target) { start = target; clearInterval(t); }
+      el.textContent = Math.floor(start).toLocaleString('ru') + (suffix||'');
+    }, step);
+  }
+  var countersAnimated = false;
+  var counterObserver = new IntersectionObserver(function(entries) {
+    if (countersAnimated) return;
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        countersAnimated = true;
+        document.querySelectorAll('[data-count]').forEach(function(el) {
+          animateCounter(el, parseInt(el.dataset.count), el.dataset.suffix || (el.dataset.count >= 100 ? '+' : ''));
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  document.addEventListener('DOMContentLoaded', function() {
+    var hero = document.querySelector('.hero-stats');
+    if (hero) counterObserver.observe(hero);
+  });
+
+  // ── PARALLAX + TOPBAR SCROLL + ACTIVE NAV ──
+  var sections = ['calculator','how','projects','why','faq','contacts'];
+  var navLinks = {};
+  document.addEventListener('DOMContentLoaded', function() {
+    sections.forEach(function(id) {
+      var a = document.querySelector('.topbar-nav a[href="#' + id + '"]');
+      if (a) navLinks[id] = a;
+    });
+  });
+  window.addEventListener('scroll', function() {
+    var sy = window.scrollY;
+    // Topbar scrolled state
+    var tb = document.querySelector('.topbar');
+    if (tb) tb.classList.toggle('scrolled', sy > 60);
+    // Parallax hero
+    var heroLeft = document.querySelector('.hero-left');
+    var heroVis = document.querySelector('.hero-visual');
+    if (heroLeft && sy < 800) { heroLeft.style.transform = 'translateY(' + sy * 0.12 + 'px)'; }
+    if (heroVis && sy < 800) { heroVis.style.transform = 'translateY(' + sy * 0.06 + 'px)'; }
+    // Active nav
+    var current = '';
+    sections.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= 120) current = id;
+    });
+    Object.keys(navLinks).forEach(function(id) { navLinks[id].classList.toggle('active', id === current); });
+  }, { passive:true });
+
+  // ── MOUSE SPOTLIGHT ──
+  var spotlight = document.getElementById('spotlight');
+  document.addEventListener('mousemove', function(e) {
+    if (!spotlight) return;
+    spotlight.style.left = e.clientX + 'px';
+    spotlight.style.top  = e.clientY + 'px';
+  });
+
+  // ── STAGGER REVEAL ──
+  document.addEventListener('DOMContentLoaded', function() {
+    var staggerObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale').forEach(function(el) {
+          setTimeout(function() { el.classList.add('visible'); }, 0);
+        });
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.stagger').forEach(function(g) { staggerObs.observe(g); });
+  });
+
+  // ── BACK TO TOP ──
+  var backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', function() {
+    if (backTop) backTop.classList.toggle('show', window.scrollY > 400);
+  }, { passive:true });
+  function scrollToTop() { window.scrollTo({ top:0, behavior:'smooth' }); }
+
+  // ── HAMBURGER ANIMATION ──
+  function setHamburger(open) {
+    var h1=document.getElementById('hb1'), h2=document.getElementById('hb2'), h3=document.getElementById('hb3');
+    if (!h1) return;
+    if (open) {
+      h1.setAttribute('x1','4'); h1.setAttribute('y1','4'); h1.setAttribute('x2','20'); h1.setAttribute('y2','20');
+      h2.setAttribute('opacity','0');
+      h3.setAttribute('x1','4'); h3.setAttribute('y1','20'); h3.setAttribute('x2','20'); h3.setAttribute('y2','4');
+    } else {
+      h1.setAttribute('x1','3'); h1.setAttribute('y1','6');  h1.setAttribute('x2','21'); h1.setAttribute('y2','6');
+      h2.setAttribute('opacity','1');
+      h3.setAttribute('x1','3'); h3.setAttribute('y1','18'); h3.setAttribute('x2','21'); h3.setAttribute('y2','18');
+    }
+  }
+  var _openMob = openMob, _closeMob = closeMob;
+  openMob = function() { _openMob(); setHamburger(true); };
+  closeMob = function() { _closeMob(); setHamburger(false); };
+
+  // ── FEEDBACK FORM ──
+  function submitFeedback(e) {
+    var name  = document.getElementById('fb_name').value.trim();
+    var email = document.getElementById('fb_email').value.trim();
+    var msg   = document.getElementById('fb_msg').value.trim();
+    var ok = true;
+    var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var fi = function(id, errId, cond) {
+      var el = document.getElementById(id), er = document.getElementById(errId);
+      if (!cond) { el.classList.add('fb-err'); er.classList.add('on'); ok=false; }
+      else { el.classList.remove('fb-err'); er.classList.remove('on'); }
+    };
+    fi('fb_name',  'fberr_name',  name.length > 1);
+    fi('fb_email', 'fberr_email', emailRe.test(email));
+    fi('fb_msg',   'fberr_msg',   msg.length > 5);
+    if (!ok) return;
+    // Ripple on button
+    var btn = document.getElementById('btnFbSend');
+    var rip = document.createElement('span'); rip.className='btn-ripple'; btn.appendChild(rip);
+    setTimeout(function() { rip.remove(); }, 700);
+    // Show success after brief delay
+    setTimeout(function() {
+      document.getElementById('fbForm').style.display = 'none';
+      var suc = document.getElementById('fbSuccess');
+      suc.classList.add('show');
+      spawnConfetti();
+    }, 400);
+  }
+
+  function spawnConfetti() {
+    var box = document.getElementById('confettiBox');
+    if (!box) return;
+    var colors = ['#f97316','#fb923c','#4ade80','#06b6d4','#a78bfa','#f43f5e','#fbbf24'];
+    for (var i=0; i<24; i++) {
+      var p = document.createElement('div');
+      p.className = 'cpiece';
+      var angle = (i / 24) * 360;
+      var dist = 80 + Math.random() * 100;
+      var tx = Math.cos(angle * Math.PI/180) * dist;
+      var ty = Math.sin(angle * Math.PI/180) * dist - 60;
+      p.style.cssText = 'background:' + colors[i%colors.length] + ';--tx:'+tx+'px;--ty:'+ty+'px;--dur:'+(0.6+Math.random()*.5)+'s;--delay:'+(Math.random()*.3)+'s;--rot:'+(Math.random()*720-360)+'deg;left:50%;top:50%;';
+      box.appendChild(p);
+    }
+  }
+
+  // ── FAQ ──
+  function toggleFaq(btn) {
+    var item = btn.parentElement;
+    var answer = item.querySelector('.faq-a');
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(i) {
+      i.classList.remove('open');
+      i.querySelector('.faq-a').style.maxHeight = '0';
+    });
+    if (!isOpen) {
+      item.classList.add('open');
+      answer.style.maxHeight = answer.scrollHeight + 'px';
+    }
+  }
+</script>
+</body>
+</html>
