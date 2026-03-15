@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Подбор гидроцилиндров — Промгидравлика</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init({ publicKey: 'ВАШ_PUBLIC_KEY' });
+    })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -221,6 +227,19 @@
     .calc-section { padding: 80px 24px; }
     .calc-wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
 
+    /* ══ СХЕМА ГЦ ══ */
+    .calc-outer { max-width: 1260px; margin: 0 auto; display: grid; grid-template-columns: 1fr 295px; gap: 32px; align-items: start; }
+    #calculator .calc-wrap { max-width: none; margin: 0; }
+    .cyl-diag-panel { position: sticky; top: 82px; background: rgba(255,255,255,.035); border: 1px solid var(--border); border-radius: 20px; padding: 20px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .cyl-diag-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+    .cyl-diag-svg { width: 100%; height: auto; display: block; }
+    .cyl-legend { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .cyl-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .cyl-legend-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cyl-legend-name { color: var(--muted); flex: 1; }
+    .cyl-legend-val { font-weight: 700; font-family: 'Arial Black', Arial, sans-serif; font-size: 13px; min-width: 52px; text-align: right; }
+    @media (max-width: 960px) { .calc-outer { grid-template-columns: 1fr; } .cyl-diag-panel { position: static; } }
+
     /* этап-блок */
     .stage {
       background: var(--surface);
@@ -260,6 +279,12 @@
       align-items: center; gap: 16px;
       padding: 10px 0;
       border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .param-hint {
+      grid-column: 1 / -1;
+      font-size: 12px; color: var(--muted);
+      margin-top: -6px; margin-bottom: 4px;
+      line-height: 1.5;
     }
     .param-row:last-child { border-bottom: none; }
     .param-name {
@@ -708,6 +733,18 @@
     .btn-print:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
     .btn-print svg { width: 15px; height: 15px; }
 
+    /* ══ COPY BUTTON ══ */
+    .btn-copy {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 15px 20px; border-radius: 14px; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+      transition: border-color .2s, color .2s;
+    }
+    .btn-copy:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+    .btn-copy svg { width: 15px; height: 15px; }
+
     /* ══ MOBILE MENU ══ */
     .mob-menu-btn {
       display: none; width: 38px; height: 38px;
@@ -813,6 +850,47 @@
       .stage-header { padding: 18px 20px; }
       .stage-body  { padding: 0 20px 22px; }
     }
+
+    /* ══ FAQ ══ */
+    .faq-list { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .faq-item.open { border-color: rgba(59,130,246,.35); }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 22px 24px; background: none; border: none; cursor: pointer;
+      text-align: left; color: var(--text);
+      font-family: 'Arial Black', Arial, sans-serif;
+      font-size: 15px; font-weight: 800; line-height: 1.4;
+    }
+    .faq-q:hover { background: rgba(255,255,255,.03); }
+    .faq-icon {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.25);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .faq-icon svg { width: 14px; height: 14px; color: var(--a1); transition: transform .3s; }
+    .faq-item.open .faq-icon { background: rgba(59,130,246,.22); }
+    .faq-item.open .faq-icon svg { transform: rotate(45deg); }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height .35s cubic-bezier(.4,0,.2,1);
+      padding: 0 24px;
+      font-size: 14px; color: var(--muted); line-height: 1.7;
+    }
+    .faq-item.open .faq-a { max-height: 600px; padding-bottom: 22px; }
+    .faq-a strong { color: var(--text); }
+    @media (max-width: 900px) {
+      .faq-q { font-size: 14px; padding: 18px; }
+      .faq-a { font-size: 13px; padding: 0 18px; }
+      .faq-item.open .faq-a { padding-bottom: 18px; }
+    }
   </style>
 </head>
 <body>
@@ -878,12 +956,12 @@
   </div>
   <h1>Подберем <span class="grad">гидрооборудование</span><br>под ваши задачи</h1>
   <p class="subtitle-hero">
-    Введите параметры — система рассчитает подходящий цилиндр из каталога и сформирует <strong>готовую спецификацию в PDF</strong>
+    Введите параметры — система рассчитает гидроцилиндр <strong>по вашим размерам</strong> и подготовит готовый расчёт для заявки
   </p>
   <div class="stats">
     <div class="stat"><div class="stat-num">3&nbsp;мин</div><div class="stat-label">время расчёта</div></div>
-    <div class="stat"><div class="stat-num">PDF</div><div class="stat-label">спецификация</div></div>
-    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">из каталога</div></div>
+    <div class="stat"><div class="stat-num">Печать</div><div class="stat-label">расчёта</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">под заказ</div></div>
   </div>
   <div class="cta-wrap">
     <a href="#calculator" class="btn-cta">
@@ -908,6 +986,7 @@
     <div class="section-label reveal">Онлайн-калькулятор</div>
     <h2 class="section-title reveal">Калькулятор гидроцилиндров</h2>
 
+    <div class="calc-outer">
     <div class="calc-wrap">
 
       <!-- ── ЭТАП 1 ── -->
@@ -961,7 +1040,7 @@
           <div class="article-row" id="s1_article_row" style="display:none">
             <div class="article-left">
               <strong id="s1_article_code">—</strong>
-              Базовый артикул из каталога
+              Расчётный артикул (под заказ)
             </div>
             <div style="font-size:13px;color:var(--muted);max-width:320px;line-height:1.5">
               Уточните ход штока и введите его в Этапе 2 для полного расчёта
@@ -1010,6 +1089,7 @@
                 <input class="ci" type="text" inputmode="decimal" id="s2_L" placeholder="напр. 300" oninput="s2Calc()">
                 <span class="unit-label">мм</span>
               </div>
+              <div class="param-hint">Расстояние, которое шток проходит при полном выдвижении. Берётся из чертежа механизма или технического задания.</div>
             </div>
 
             <div class="param-row">
@@ -1018,6 +1098,7 @@
                 <input class="ci" type="text" inputmode="decimal" id="s2_t" placeholder="напр. 3" oninput="s2Calc()">
                 <span class="unit-label">сек</span>
               </div>
+              <div class="param-hint">Желаемое время полного хода штока. Влияет на требуемую подачу насоса. Типовые значения: 2–5 сек (быстрые механизмы), 5–15 сек (стандарт).</div>
             </div>
 
             <div class="param-row">
@@ -1115,6 +1196,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               Сохранить / Распечатать PDF
             </button>
+            <button class="btn-copy" id="btn-copy-cyl" onclick="copyCylinderResult()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Скопировать результат
+            </button>
             <button class="btn-reset" onclick="resetAll()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
               Сбросить
@@ -1125,6 +1210,67 @@
       </div>
 
     </div><!-- /calc-wrap -->
+
+      <!-- ── СХЕМА ГИДРОЦИЛИНДРА ── -->
+      <div class="cyl-diag-panel">
+        <div class="cyl-diag-title">Схема гидроцилиндра</div>
+        <svg class="cyl-diag-svg" viewBox="0 0 332 185" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="45" width="208" height="12" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="40" y="145" width="208" height="12" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="40" y="45" width="14" height="112" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect x="234" y="45" width="14" height="112" rx="2" fill="#0e1e35" stroke="rgba(6,182,212,.5)" stroke-width="1.5"/>
+          <rect id="diag_hole" x="234" y="79" width="14" height="44" fill="#060810"/>
+          <rect x="125" y="57" width="13" height="88" rx="1" fill="#1a3050" stroke="rgba(148,163,184,.4)" stroke-width="1.5"/>
+          <line x1="125" y1="73" x2="138" y2="73" stroke="#2a4570" stroke-width="2"/>
+          <line x1="125" y1="101" x2="138" y2="101" stroke="#2a4570" stroke-width="2"/>
+          <line x1="125" y1="129" x2="138" y2="129" stroke="#2a4570" stroke-width="2"/>
+          <rect id="diag_rod" x="138" y="79" width="162" height="44" rx="3" fill="#1f3d5c" stroke="rgba(148,163,184,.3)" stroke-width="1.5"/>
+          <rect id="diag_rod_hl" x="138" y="79" width="162" height="5" rx="2" fill="rgba(255,255,255,.08)"/>
+          <line x1="22" y1="57" x2="22" y2="145" stroke="#06b6d4" stroke-width="1.5"/>
+          <line x1="17" y1="57" x2="27" y2="57" stroke="#06b6d4" stroke-width="1.5"/>
+          <line x1="17" y1="145" x2="27" y2="145" stroke="#06b6d4" stroke-width="1.5"/>
+          <text x="11" y="100" fill="#06b6d4" font-size="12" font-family="Arial" font-weight="700" text-anchor="middle">D</text>
+          <line id="diag_d_line" x1="307" y1="79" x2="307" y2="123" stroke="#f97316" stroke-width="1.5"/>
+          <line id="diag_d_top" x1="302" y1="79" x2="312" y2="79" stroke="#f97316" stroke-width="1.5"/>
+          <line id="diag_d_bot" x1="302" y1="123" x2="312" y2="123" stroke="#f97316" stroke-width="1.5"/>
+          <text id="diag_d_label" x="315" y="101" fill="#f97316" font-size="12" font-family="Arial" font-weight="700" text-anchor="start">d</text>
+          <line x1="54" y1="167" x2="234" y2="167" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="54" y1="162" x2="54" y2="172" stroke="#a78bfa" stroke-width="1.5"/>
+          <line x1="234" y1="162" x2="234" y2="172" stroke="#a78bfa" stroke-width="1.5"/>
+          <polyline points="59,163 54,167 59,171" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="229,163 234,167 229,171" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="144" y="181" fill="#a78bfa" font-size="10" font-family="Arial" font-weight="700" text-anchor="middle">L — ход штока</text>
+        </svg>
+        <div class="cyl-legend">
+          <div class="cyl-legend-row">
+            <span class="cyl-legend-color" style="background:#06b6d4"></span>
+            <span class="cyl-legend-name">D — диаметр гильзы</span>
+            <span class="cyl-legend-val" id="leg_D">—</span>
+          </div>
+          <div class="cyl-legend-row">
+            <span class="cyl-legend-color" style="background:#f97316"></span>
+            <span class="cyl-legend-name">d — диаметр штока</span>
+            <span class="cyl-legend-val" id="leg_d">—</span>
+          </div>
+          <div class="cyl-legend-row">
+            <span class="cyl-legend-color" style="background:#a78bfa"></span>
+            <span class="cyl-legend-name">L — ход штока</span>
+            <span class="cyl-legend-val" id="leg_L">—</span>
+          </div>
+          <div class="cyl-legend-row">
+            <span class="cyl-legend-color" style="background:#4ade80"></span>
+            <span class="cyl-legend-name">t — время выдвижения</span>
+            <span class="cyl-legend-val" id="leg_t">—</span>
+          </div>
+          <div class="cyl-legend-row">
+            <span class="cyl-legend-color" style="background:#f43f5e"></span>
+            <span class="cyl-legend-name">P — рабочее давление</span>
+            <span class="cyl-legend-val" id="leg_P">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /calc-outer -->
   </div>
 </section>
 
@@ -1283,6 +1429,10 @@
           </div>
 
           <div class="btn-kp-wrap">
+            <button class="btn-copy" id="btn-copy-hs" onclick="copyHSResult()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Скопировать результат
+            </button>
             <button class="btn-reset" onclick="hsReset()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
               Сбросить
@@ -1307,7 +1457,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <h3>Ответ за 3 минуты</h3>
-        <p>Калькулятор мгновенно подбирает подходящий цилиндр из каталога — без ожидания ответа менеджера и без звонков в технический отдел.</p>
+        <p>Калькулятор мгновенно рассчитывает параметры гидроцилиндра под ваши условия — без ожидания ответа менеджера и без звонков в технический отдел.</p>
         <span class="tag">Экономия времени</span>
       </div>
       <div class="adv-card reveal">
@@ -1322,9 +1472,9 @@
         <div class="adv-icon icon-purple">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </div>
-        <h3>PDF-спецификация</h3>
-        <p>Готовый документ с артикулом из каталога формируется за один клик. Отправьте нам для оформления заказа или согласуйте с руководителем.</p>
-        <span class="tag">PDF за 1 клик</span>
+        <h3>Распечатать расчёт</h3>
+        <p>Готовый расчёт с артикулом формируется за один клик. Отправьте нам для оформления заказа или согласуйте с руководителем.</p>
+        <span class="tag">Печать за 1 клик</span>
       </div>
     </div>
   </div>
@@ -1501,6 +1651,87 @@
   </div>
 </section>
 
+<!-- ══ FAQ ══ -->
+<section class="section" id="faq">
+  <div class="section-inner">
+    <p class="section-label">Частые вопросы</p>
+    <h2 class="section-title">Отвечаем честно</h2>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          У вас дороже, чем у конкурентов
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Возможно, цена выглядит выше — потому что мы включаем в неё то, что другие берут отдельно: инженерный расчёт, согласование чертежей, входной контроль комплектующих и гарантийное сопровождение. <strong>Если вам прислали КП дешевле — пришлите нам, разберём позиции и скажем, где разница.</strong>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Долго ждать — нужно быстро
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Стандартный срок изготовления гидроцилиндров — <strong>7–21 рабочий день</strong> в зависимости от сложности. При срочном заказе возможно ускоренное производство — уточните при оформлении заявки. Типовые позиции из наличия отправляем в течение 1–3 дней.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Какая гарантия на оборудование?
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          <strong>12 месяцев</strong> на всё изготовленное оборудование с момента отгрузки. В случае гарантийного случая — бесплатный ремонт или замена. Для сложных изделий по договорённости возможна расширенная гарантия до 24 месяцев.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Мы не можем передавать чертежи — конфиденциально
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Это стандартная ситуация. Мы работаем по NDA — подписываем соглашение о неразглашении до передачи любой документации. <strong>Чертежи не хранятся дольше срока, необходимого для производства</strong>, и не передаются третьим лицам. Шаблон NDA можем прислать первыми — просто напишите об этом в заявке.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Откуда уверенность в качестве?
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Каждый гидроцилиндр проходит <strong>стендовые испытания</strong> давлением 1,5× от рабочего перед отгрузкой. К заказу прилагается паспорт с протоколом испытаний. Комплектующие — только от проверенных российских и европейских производителей.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          У нас маленький объём — возьмётесь?
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Да. Мы работаем <strong>от 1 штуки</strong>. Понимаем, что небольшой первый заказ часто становится началом долгого сотрудничества. Минимальный заказ не ограничен — просто стоимость единицы будет соответствовать индивидуальному производству.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          У нас уже есть поставщик
+          <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        </button>
+        <div class="faq-a">
+          Хорошо — значит, вам есть с чем сравнить. Запросите у нас КП на тот же объём: это ни к чему не обязывает, зато даёт реальную точку сравнения по цене, срокам и условиям. <strong>Многие наши клиенты пришли именно так.</strong>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <footer>
   <p>© 2025 Промгидравлика · <a href="https://p-gidravlika.ru/kontakti" target="_blank">p-gidravlika.ru</a> · Проектирование и производство гидравлического оборудования</p>
 </footer>
@@ -1535,7 +1766,10 @@
         <input type="tel" id="modal_phone" placeholder="+7 (___) ___-__-__" autocomplete="tel">
       </div>
 
-      <button class="btn-modal-submit" onclick="submitModal()">
+      <div id="modal_send_error" style="display:none;color:#ef4444;font-size:13px;margin-bottom:10px;text-align:center;">
+        Не удалось отправить заявку. Позвоните нам напрямую: <a href="tel:+73412775704" style="color:#ef4444;">+7 (3412) 77-57-04</a>
+      </div>
+      <button class="btn-modal-submit" id="btn_modal_submit" onclick="submitModal()">
         Перезвоните мне
       </button>
     </div>
@@ -1661,6 +1895,37 @@
     el.className = 'cr' + (cls ? ' ' + cls : '');
   }
 
+  // ── Схема ГЦ ──
+  function updateDiagram(D, d, L, t, P) {
+    var lD = document.getElementById('leg_D');
+    var ld = document.getElementById('leg_d');
+    var lL = document.getElementById('leg_L');
+    var lt = document.getElementById('leg_t');
+    var lP = document.getElementById('leg_P');
+    if (lD) lD.textContent = D > 0 ? D + ' мм' : '—';
+    if (ld) ld.textContent = d > 0 ? d + ' мм' : '—';
+    if (lL) lL.textContent = L > 0 ? L + ' мм' : '—';
+    if (lt) lt.textContent = t > 0 ? t + ' сек' : '—';
+    if (lP) lP.textContent = P > 0 ? P + ' МПа' : '—';
+    if (D > 0 && d > 0 && d < D) {
+      var iH = 88, cY = 101;
+      var rH = Math.max(8, Math.round(iH * d / D));
+      var rY = Math.round(cY - rH / 2);
+      var s = function(id, attrs) {
+        var el = document.getElementById(id); if (!el) return;
+        Object.keys(attrs).forEach(function(k) { el.setAttribute(k, attrs[k]); });
+      };
+      s('diag_rod',    { y: rY, height: rH });
+      s('diag_rod_hl', { y: rY });
+      s('diag_hole',   { y: rY, height: rH });
+      s('diag_d_line', { y1: rY, y2: rY + rH });
+      s('diag_d_top',  { y1: rY, y2: rY });
+      s('diag_d_bot',  { y1: rY + rH, y2: rY + rH });
+      var dl = document.getElementById('diag_d_label');
+      if (dl) dl.setAttribute('y', rY + Math.round(rH / 2) + 5);
+    }
+  }
+
   // ── ЭТАП 1 ──
   function s1Calc() {
     var raw = parseFloat((document.getElementById('s1_force_n').value || '').replace(',', '.'));
@@ -1708,6 +1973,7 @@
     var t  = pn('s2_t');  // сек
     var P  = pn('s2_P');  // МПа
 
+    updateDiagram(D, d, L, t, P);
     var ids = ['r_vp','r_vs','r_q','r_tret','r_fp_n','r_fp_kg','r_ft_n','r_ft_kg'];
     document.getElementById('s2_error').classList.remove('visible');
     if (!D || !d || !L || !t || !P || D <= 0 || d <= 0 || L <= 0 || t <= 0 || P <= 0) {
@@ -1801,10 +2067,27 @@
       setTimeout(function(){ document.getElementById('modal_phone').style.borderColor = ''; }, 1500);
       return;
     }
-    // Здесь можно подключить отправку на сервер (fetch/ajax)
-    document.getElementById('modalForm').style.display = 'none';
-    document.getElementById('modalSuccess').style.display = 'block';
-    setTimeout(closeModal, 3500);
+
+    var btn = document.getElementById('btn_modal_submit');
+    var errEl = document.getElementById('modal_send_error');
+    btn.disabled = true;
+    btn.textContent = 'Отправляем…';
+    errEl.style.display = 'none';
+
+    emailjs.send('ВАШ_SERVICE_ID', 'ВАШ_TEMPLATE_ID', {
+      from_name: name || 'Не указано',
+      phone:     phone,
+      page:      window.location.href
+    }).then(function() {
+      document.getElementById('modalForm').style.display = 'none';
+      document.getElementById('modalSuccess').style.display = 'block';
+      setTimeout(closeModal, 3500);
+    }, function() {
+      errEl.style.display = 'block';
+    }).finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Перезвоните мне';
+    });
   }
   // ══════════════════════════════════════
   // КАЛЬКУЛЯТОР ГИДРОСТАНЦИЙ
@@ -1889,6 +2172,92 @@
     document.getElementById('hs-result-cta').classList.add('visible');
   }
 
+  function copyResult(btnId, lines) {
+    var text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById(btnId);
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="20 6 9 17 4 12"/></svg> Скопировано!';
+      btn.style.color = '#4ade80';
+      btn.style.borderColor = 'rgba(74,222,128,.5)';
+      setTimeout(function() {
+        btn.innerHTML = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 2000);
+    });
+  }
+
+  function copyCylinderResult() {
+    var lines = ['=== Расчёт гидроцилиндра · Промгидравлика ===', ''];
+    var s1_dmin = document.getElementById('s1_dmin').textContent.trim();
+    if (s1_dmin !== '—') {
+      lines.push('[ Этап 1: Подбор диаметра поршня ]');
+      lines.push('Мин. диаметр поршня:      ' + s1_dmin + ' мм');
+      lines.push('Стандартный диаметр ГОСТ: ' + document.getElementById('s1_dstd').textContent.trim() + ' мм');
+      var art1 = document.getElementById('s1_article_code').textContent.trim();
+      if (art1 && art1 !== '—') lines.push(art1);
+      lines.push('');
+    }
+    var r_vp = document.getElementById('r_vp').textContent.trim();
+    if (r_vp !== '—') {
+      var D = document.getElementById('s2_D').value;
+      var d = document.getElementById('s2_d').value;
+      var L = document.getElementById('s2_L').value;
+      var t = document.getElementById('s2_t').value;
+      var P = document.getElementById('s2_P').value;
+      lines.push('[ Исходные данные ]');
+      if (D) lines.push('Диаметр гильзы:      ' + D + ' мм');
+      if (d) lines.push('Диаметр штока:       ' + d + ' мм');
+      if (L) lines.push('Ход:                 ' + L + ' мм');
+      if (t) lines.push('Время выдвижения:    ' + t + ' сек');
+      if (P) lines.push('Давление:            ' + P + ' МПа');
+      lines.push('');
+      lines.push('[ Этап 2: Результаты ]');
+      lines.push('Объём поршневой полости:  ' + r_vp + ' л');
+      lines.push('Объём штоковой полости:   ' + document.getElementById('r_vs').textContent.trim() + ' л');
+      lines.push('Подача насоса:            ' + document.getElementById('r_q').textContent.trim() + ' л/мин');
+      lines.push('Время втягивания:         ' + document.getElementById('r_tret').textContent.trim() + ' сек');
+      lines.push('Толкающее усилие:         ' + document.getElementById('r_fp_n').textContent.trim() + ' Н / ' + document.getElementById('r_fp_kg').textContent.trim() + ' кг');
+      lines.push('Тянущее усилие:           ' + document.getElementById('r_ft_n').textContent.trim() + ' Н / ' + document.getElementById('r_ft_kg').textContent.trim() + ' кг');
+      var art2 = document.getElementById('s2_article_code').textContent.trim();
+      if (art2 && art2 !== '—') lines.push(art2);
+    }
+    if (lines.length <= 2) return;
+    lines.push('');
+    lines.push('Промгидравлика · p-gidravlika.ru · +7 (3412) 77-57-04');
+    copyResult('btn-copy-cyl', lines);
+  }
+
+  function copyHSResult() {
+    var lines = ['=== Расчёт гидростанции · Промгидравлика ===', ''];
+    var pw = document.getElementById('hs_power_calc').textContent.trim();
+    if (pw !== '—') {
+      var hsP = document.getElementById('hs_pressure').value;
+      var hsQ = document.getElementById('hs_flow').value;
+      if (hsP) lines.push('Давление:                   ' + hsP + ' МПа');
+      if (hsQ) lines.push('Подача:                     ' + hsQ + ' л/мин');
+      lines.push('');
+      lines.push('[ Результаты ]');
+      lines.push('Расчётная мощность:         ' + pw + ' кВт');
+      lines.push('Стандартная мощность ГОСТ:  ' + document.getElementById('hs_power_std').textContent.trim() + ' кВт');
+      lines.push('Тип насоса:                 ' + document.getElementById('hs_pump_type').textContent.trim());
+      lines.push('');
+      lines.push('[ Параметры гидростанции ]');
+      lines.push('Мощность эл. двигателя:     ' + document.getElementById('hs2_power').textContent.trim() + ' кВт');
+      lines.push('Давление:                   ' + document.getElementById('hs2_pressure').textContent.trim() + ' МПа');
+      lines.push('Подача насоса:              ' + document.getElementById('hs2_flow').textContent.trim() + ' л/мин');
+      lines.push('Объём масляного бака:       ' + document.getElementById('hs2_tank').textContent.trim() + ' л');
+      lines.push('Тип насоса:                 ' + document.getElementById('hs2_pump').textContent.trim());
+      var hsArt = document.getElementById('hs_article_code').textContent.trim();
+      if (hsArt && hsArt !== '—') { lines.push(''); lines.push(hsArt); }
+    }
+    if (lines.length <= 2) return;
+    lines.push('');
+    lines.push('Промгидравлика · p-gidravlika.ru · +7 (3412) 77-57-04');
+    copyResult('btn-copy-hs', lines);
+  }
+
   function hsReset() {
     document.getElementById('hs_pressure').value = '';
     document.getElementById('hs_flow').value = '';
@@ -1911,6 +2280,14 @@
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') { closeModal(); closeMobMenu(); }
   });
+
+  // ── FAQ аккордеон ──
+  function toggleFaq(btn) {
+    var item = btn.closest('.faq-item');
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(el){ el.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  }
   // Маска телефона
   document.getElementById('modal_phone').addEventListener('input', function(){
     var v = this.value.replace(/\D/g,'');
