@@ -48,7 +48,7 @@
     .topbar-phone:hover { color:var(--cyan); }
     .topbar-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:50px; background:rgba(249,115,22,.15); border:1px solid rgba(249,115,22,.35); color:var(--orange); font-size:13px; font-weight:700; cursor:pointer; transition:.2s; white-space:nowrap; }
     .topbar-btn:hover { background:rgba(249,115,22,.28); border-color:var(--orange); }
-    .mob-menu-btn { display:none; background:none; border:1px solid var(--border2); border-radius:8px; padding:8px; cursor:pointer; color:var(--text); }
+    .mob-menu-btn { display:none; background:none; border:1px solid var(--border2); border-radius:8px; padding:8px; cursor:pointer; color:var(--text); position:fixed; top:10px; right:16px; z-index:201; }
     .mob-menu-btn svg { width:18px; height:18px; display:block; }
 
     /* ══ MOBILE OVERLAY ══ */
@@ -505,15 +505,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
       Заказать звонок
     </button>
-    <button class="mob-menu-btn" id="hambBtn" onclick="openMob()">
-      <svg id="hambSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-        <line class="hb-line" id="hb1" x1="3" y1="6" x2="21" y2="6"/>
-        <line class="hb-line" id="hb2" x1="3" y1="12" x2="21" y2="12"/>
-        <line class="hb-line" id="hb3" x1="3" y1="18" x2="21" y2="18"/>
-      </svg>
-    </button>
   </div>
 </div>
+<button class="mob-menu-btn" id="hambBtn" onclick="openMob()">
+  <svg id="hambSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+    <line class="hb-line" id="hb1" x1="3" y1="6" x2="21" y2="6"/>
+    <line class="hb-line" id="hb2" x1="3" y1="12" x2="21" y2="12"/>
+    <line class="hb-line" id="hb3" x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
 
 <!-- ══ HERO ══ -->
 <header class="hero">
@@ -551,9 +551,9 @@
         <button class="btn-ghost" onclick="openModal()">Заказать звонок</button>
       </div>
       <div class="hero-stats reveal">
-        <div class="stat"><div class="stat-num" data-count="15">0</div><div class="stat-label">лет на рынке</div></div>
-        <div class="stat"><div class="stat-num" data-count="1200">0</div><div class="stat-label">проектов</div></div>
-        <div class="stat"><div class="stat-num" data-count="60">0</div><div class="stat-label">регионов</div></div>
+        <div class="stat"><div class="stat-num" data-count="15">15</div><div class="stat-label">лет на рынке</div></div>
+        <div class="stat"><div class="stat-num" data-count="1200" data-suffix="+">1200+</div><div class="stat-label">проектов</div></div>
+        <div class="stat"><div class="stat-num" data-count="60">60</div><div class="stat-label">регионов</div></div>
         <div class="stat"><div class="stat-num">2 года</div><div class="stat-label">гарантия</div></div>
       </div>
     </div>
@@ -706,13 +706,13 @@
         </div>
 
         <!-- Arrow -->
-        <div class="stage-arrow reveal">
+        <div class="stage-arrow reveal" id="stageArrow" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
           <span>данные переходят в Этап 2</span>
         </div>
 
         <!-- ── ЭТАП 2 ── -->
-        <div class="stage reveal" id="stage2">
+        <div class="stage reveal" id="stage2" style="display:none">
           <div class="stage-head">
             <div class="stage-num sn2">2</div>
             <div>
@@ -811,6 +811,10 @@
               </div>
             </div>
             <div class="result-actions" id="resultActions" style="display:none">
+              <button class="btn-kp" onclick="sendToForm()" style="flex:1;justify-content:center;font-size:15px;padding:12px 24px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Получить КП на этот цилиндр
+              </button>
               <button class="btn-copy" id="btnCopy" onclick="copyFull()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                 Скопировать
@@ -819,11 +823,8 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Распечатать
               </button>
-              <button class="btn-kp" onclick="sendToForm()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Получить КП на этот цилиндр
-              </button>
             </div>
+            <div id="resultNote" style="display:none;font-size:12px;color:var(--muted);margin-top:8px">Нажмите «Получить КП» — инженер перезвонит в течение 2 часов и подтвердит расчёт</div>
           </div>
         </div>
       </div><!-- /calc-stages -->
@@ -1202,7 +1203,7 @@
         <div class="form-success" id="formSuccess">
           <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
           <h3>Заявка принята!</h3>
-          <p>Инженер перезвонит в рабочее время (Пн–Пт 8:30–17:00).<br>Если отправили в выходной — ответим в понедельник.</p>
+          <p>Инженер перезвонит на <strong id="successPhone" style="color:var(--text)">ваш номер</strong><br>в рабочее время (Пн–Пт 8:30–17:00).<br>Если отправили в выходной — ответим в понедельник.</p>
         </div>
       </div>
     </div>
@@ -1375,6 +1376,7 @@
     artRow.className = 'art-row visible';
     res.style.display = 'block';
     actions.style.display = 'flex';
+    var note = document.getElementById('resultNote'); if (note) note.style.display = 'block';
     // Update stage 1 summary
     var sumD = document.getElementById('sumD');
     var sumP = document.getElementById('sumP');
@@ -1425,13 +1427,17 @@
 
   // ── NAVIGATION ──
   function goStage2() {
+    var s2 = document.getElementById('stage2');
+    var arr = document.getElementById('stageArrow');
+    if (s2) { s2.style.display = 'block'; s2.classList.add('visible'); }
+    if (arr) { arr.style.display = 'flex'; arr.classList.add('visible'); }
     document.getElementById('stage1').style.opacity = '.5';
     document.getElementById('stage1').style.pointerEvents = 'none';
-    document.getElementById('stage2').scrollIntoView({behavior:'smooth', block:'start'});
     setTimeout(function() {
+      s2.scrollIntoView({behavior:'smooth', block:'start'});
       document.getElementById('stage1').style.opacity = '';
       document.getElementById('stage1').style.pointerEvents = '';
-    }, 800);
+    }, 100);
   }
   function goStage1() {
     document.getElementById('stage1').scrollIntoView({behavior:'smooth', block:'start'});
@@ -1515,8 +1521,12 @@
     if (!phone || phone.replace(/\D/g,'').length < 10) { document.getElementById('f_phone').className='form-field-input err'; document.getElementById('ferr_phone').className='ferr show'; ok=false; }
     else { document.getElementById('f_phone').className=''; document.getElementById('ferr_phone').className='ferr'; }
     if (!ok) return;
+    var phoneVal = phone;
     document.getElementById('formWrap').style.display = 'none';
-    document.getElementById('formSuccess').className = 'form-success show';
+    var suc = document.getElementById('formSuccess');
+    suc.className = 'form-success show';
+    var ph = document.getElementById('successPhone');
+    if (ph) ph.textContent = phoneVal;
   }
 
   // ── MODAL ──
