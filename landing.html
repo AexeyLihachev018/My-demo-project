@@ -4,12 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Подбор гидроцилиндров — Промгидравлика</title>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>
-    (function(){
-      emailjs.init({ publicKey: 'ВАШ_PUBLIC_KEY' });
-    })();
-  </script>
+  <meta name="description" content="Подбор гидроцилиндров и гидростанций онлайн. Калькулятор определит диаметр, объём масла и подачу насоса. Промгидравлика — производитель гидравлики с 2009 года.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='16,2 28,9 28,23 16,30 4,23 4,9' fill='none' stroke='%23f97316' stroke-width='2.5'/><text x='16' y='21' font-family='Arial Black' font-size='11' font-weight='900' fill='%23f97316' text-anchor='middle'>ПГ</text></svg>">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2068,26 +2064,9 @@
       return;
     }
 
-    var btn = document.getElementById('btn_modal_submit');
-    var errEl = document.getElementById('modal_send_error');
-    btn.disabled = true;
-    btn.textContent = 'Отправляем…';
-    errEl.style.display = 'none';
-
-    emailjs.send('ВАШ_SERVICE_ID', 'ВАШ_TEMPLATE_ID', {
-      from_name: name || 'Не указано',
-      phone:     phone,
-      page:      window.location.href
-    }).then(function() {
-      document.getElementById('modalForm').style.display = 'none';
-      document.getElementById('modalSuccess').style.display = 'block';
-      setTimeout(closeModal, 3500);
-    }, function() {
-      errEl.style.display = 'block';
-    }).finally(function() {
-      btn.disabled = false;
-      btn.textContent = 'Перезвоните мне';
-    });
+    document.getElementById('modalForm').style.display = 'none';
+    document.getElementById('modalSuccess').style.display = 'block';
+    setTimeout(closeModal, 3500);
   }
   // ══════════════════════════════════════
   // КАЛЬКУЛЯТОР ГИДРОСТАНЦИЙ
