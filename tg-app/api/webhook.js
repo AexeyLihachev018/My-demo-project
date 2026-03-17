@@ -41,24 +41,20 @@ export default async function handler(req, res) {
     // ── Команда /start ────────────────────────────────
     if (text.startsWith('/start')) {
       const firstName = msg.from?.first_name || '';
-      const greeting  = firstName ? `Привет, ${firstName}! 👋` : 'Привет! 👋';
-      await sendMessage(BOT_TOKEN, chatId,
-        `${greeting}\n\n` +
-        `Это каталог гидроцилиндров *Промгидравлика*.\n\n` +
-        `Здесь можно:\n` +
-        `🔍 Найти цилиндр по диаметру или артикулу\n` +
-        `🧮 Рассчитать нужный размер по усилию и давлению\n` +
-        `📋 Отправить заявку менеджеру прямо из чата\n\n` +
-        `Нажмите кнопку ниже, чтобы открыть каталог 👇`,
+      const greeting  = firstName ? `Привет, ${firstName}!` : 'Привет!';
+      const tgResp = await sendMessage(BOT_TOKEN, chatId,
+        `${greeting}\n\nЭто каталог гидроцилиндров Промгидравлика.\n\nЗдесь можно:\n- Найти цилиндр по диаметру или артикулу\n- Рассчитать нужный размер по усилию и давлению\n- Отправить заявку менеджеру прямо из чата\n\nНажмите кнопку ниже:`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+              { text: 'Открыть каталог', web_app: { url: APP_URL } }
             ]]
           }
         }
       );
-      return res.status(200).json({ ok: true });
+      const tgResult = await tgResp.json().catch(() => ({}));
+      console.log('sendMessage result:', JSON.stringify(tgResult));
+      return res.status(200).json({ ok: true, tg: tgResult.ok, desc: tgResult.description });
     }
 
     // ── Команда /help ─────────────────────────────────
