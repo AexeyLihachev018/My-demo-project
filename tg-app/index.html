@@ -813,9 +813,10 @@
       justify-content: center;
       padding: 24px 16px;
       opacity: 0;
+      pointer-events: none;
       transition: opacity 0.3s ease;
     }
-    .offer-overlay.visible { opacity: 1; }
+    .offer-overlay.visible { opacity: 1; pointer-events: all; }
 
     .offer-card {
       background: var(--section);
