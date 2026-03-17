@@ -122,6 +122,29 @@
       font-weight: 600;
     }
 
+    .btn-back {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: -8px;
+      transition: background 0.1s;
+    }
+    .btn-back:active { background: var(--bg2); }
+
+    /* Плейсхолдер справа — выравниваем заголовок по центру */
+    .s-header-ph {
+      width: 44px;
+      flex-shrink: 0;
+    }
+
     /* =====================================================
        СЕКЦИИ (белые карточки-группы)
     ===================================================== */
@@ -1239,6 +1262,10 @@ function drawHome() {
     </div>` : '';
 
   return `
+    <div class="s-header">
+      <div class="s-title" style="text-align:left;font-size:17px;font-weight:700;color:var(--text)">Промгидравлика</div>
+    </div>
+
     <div class="search-bar">
       <div class="search-inner" data-a="go-search" style="cursor:pointer">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1310,6 +1337,9 @@ function drawSearch(q) {
 
   return `
     <div class="s-header" style="gap:8px;padding:8px 16px">
+      <button class="btn-back" data-a="back">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div class="search-inner" style="flex:1;height:40px">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -1358,7 +1388,11 @@ function drawCatalog() {
 
   return `
     <div class="s-header">
-      <div class="s-title" style="text-align:left;font-size:15px">Гильза ${title}</div>
+      <button class="btn-back" data-a="back">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="s-title" style="font-size:15px">Гильза ${title}</div>
+      <div class="s-header-ph"></div>
     </div>
     <div class="chips">
       ${chips}
@@ -1406,7 +1440,11 @@ function drawProduct() {
 
   return `
     <div class="s-header">
+      <button class="btn-back" data-a="back">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div class="s-title">${p.article}</div>
+      <div class="s-header-ph"></div>
     </div>
 
     <div class="svg-wrap">${cylinderSVG(p.D, p.d, p.L)}</div>
@@ -1530,7 +1568,11 @@ function drawCalc() {
 
     return `
       <div class="s-header">
+        <button class="btn-back" data-a="back">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
         <div class="s-title">Калькулятор</div>
+        <div class="s-header-ph"></div>
       </div>
       ${progress}
       <div class="s-label">Подбор диаметра гильзы</div>
@@ -1620,7 +1662,11 @@ function drawCalc() {
 
   return `
     <div class="s-header">
+      <button class="btn-back" data-a="back">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div class="s-title">Калькулятор</div>
+      <div class="s-header-ph"></div>
     </div>
     ${progress}
     ${step1box}
@@ -1692,7 +1738,11 @@ function drawCart() {
 
   return `
     <div class="s-header">
+      <button class="btn-back" data-a="back">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div class="s-title">Заявка (${S.cart.length})</div>
+      <div class="s-header-ph"></div>
     </div>
 
     <div class="s-label">Позиции</div>
@@ -1765,6 +1815,10 @@ document.addEventListener('click', e => {
   const a = el.dataset.a;
 
   switch (a) {
+
+    case 'back':
+      goBack();
+      break;
 
     case 'go-search':
       S.searchQ = '';
