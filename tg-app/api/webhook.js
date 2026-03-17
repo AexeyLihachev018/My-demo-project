@@ -9,6 +9,14 @@
 const APP_URL = 'https://my-demo-project-nt8u.vercel.app/';
 
 export default async function handler(req, res) {
+  // DEBUG endpoint — убрать после проверки
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      has_token: !!process.env.BOT_TOKEN,
+      token_start: process.env.BOT_TOKEN ? process.env.BOT_TOKEN.slice(0,8) : 'NOT SET'
+    });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -18,7 +26,7 @@ export default async function handler(req, res) {
 
   if (!BOT_TOKEN) {
     console.error('BOT_TOKEN не задан');
-    return res.status(200).json({ ok: true }); // 200 чтобы Telegram не ретраил
+    return res.status(200).json({ ok: false, error: 'no token' });
   }
 
   try {
