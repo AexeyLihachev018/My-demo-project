@@ -2060,14 +2060,9 @@ document.addEventListener('click', e => {
     case 'onboard-start':
       try { localStorage.setItem('onboard_v1', '1'); } catch(e) {}
       S.stack = ['home'];
-      draw('home');
-      { const h = document.getElementById('s-home');
-        const o = document.getElementById('s-onboard');
-        if (h) { h.style.transform='translateX(0)'; h.classList.add('active'); }
-        if (o) { o.classList.remove('active'); o.style.transform='translateX(-100%)'; }
-      }
-      if (hasTG) { tg.MainButton.hide(); tg.BackButton.hide(); }
-      showOfferIfNeeded();
+      renderAndShow('home', 'fwd', 'onboard');
+      if (hasTG) tg.BackButton.hide();
+      setTimeout(showOfferIfNeeded, 320);
       break;
 
     case 'share-bot': {
