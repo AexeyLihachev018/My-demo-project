@@ -1171,7 +1171,7 @@ function sendOrder() {
       // Если открыто не из бота — sendData не работает
       tg.showAlert(
         '✓ Данные заявки готовы.\n\n' +
-        'Для полноценной отправки откройте приложение через бота @pgidravlikabot',
+        'Для полноценной отправки откройте приложение через бота @PromGidravlika_Bot',
         () => {}
       );
     }
@@ -1825,8 +1825,8 @@ document.addEventListener('click', e => {
       break;
 
     case 'go-mgr':
-      if (hasTG) tg.openTelegramLink('https://t.me/pgidravlikabot');
-      else window.open('https://t.me/pgidravlikabot', '_blank');
+      if (hasTG) tg.openTelegramLink('https://t.me/PromGidravlika_Bot');
+      else window.open('https://t.me/PromGidravlika_Bot', '_blank');
       break;
 
     case 'share': {

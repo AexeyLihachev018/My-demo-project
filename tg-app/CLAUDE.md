@@ -52,8 +52,8 @@ tg-app/
 
 ### Контакты
 В функции `drawHome()` — телефон и сайт внизу страницы.
-Username бота: `@pgidravlikabot` — в функциях `sendOrder()` и обработчике `go-mgr`.
-Чтобы изменить: найти `pgidravlikabot` и заменить на актуальный username (только Latin, ends with `bot`).
+Username бота: `@PromGidravlika_Bot` — в функциях `sendOrder()` и обработчике `go-mgr`.
+Чтобы изменить: найти `PromGidravlika_Bot` и заменить на актуальный username (только Latin, ends with `bot`).
 
 ---
 
