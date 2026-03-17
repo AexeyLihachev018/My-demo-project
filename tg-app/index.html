@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <!-- Запрещаем масштабирование — важно для TMA -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="color-scheme" content="light dark">
+  <title>Промгидравлика — каталог</title>
+
+  <!-- Telegram Web App SDK — ОБЯЗАТЕЛЬНО первым скриптом -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    /* =====================================================
+       ПЕРЕМЕННЫЕ ТЕМЫ
+       Используем CSS-переменные Telegram как основу.
+       Если открыто вне Telegram — применяются fallback-значения.
+    ===================================================== */
+    :root {
+      --bg:        var(--tg-theme-bg-color, #ffffff);
+      --bg2:       var(--tg-theme-secondary-bg-color, #f2f2f7);
+      --section:   var(--tg-theme-section-bg-color, #ffffff);
+      --text:      var(--tg-theme-text-color, #000000);
+      --hint:      var(--tg-theme-hint-color, #8e8e93);
+      --link:      var(--tg-theme-link-color, #2aabee);
+      --btn-bg:    var(--tg-theme-button-color, #2aabee);
+      --btn-text:  var(--tg-theme-button-text-color, #ffffff);
+      --sep:       rgba(0,0,0,0.1);
+
+      /* Собственные цвета приложения */
+      --accent:    #2aabee;
+      --orange:    #f97316;
+      --green:     #34c759;
+      --yellow:    #ff9500;
+      --red:       #ff3b30;
+      --purple:    #a78bfa;
+
+      --radius:    12px;
+      --radius-sm: 8px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Тёмная тема — корректируем разделитель */
+    @media (prefers-color-scheme: dark) {
+      :root { --sep: rgba(255,255,255,0.1); }
+    }
+
+    /* =====================================================
+       СБРОС И БАЗА
+    ===================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg2);
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input, textarea {
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+    }
+    button { border: none; cursor: pointer; }
+    input:focus, textarea:focus { outline: none; }
+
+    /* =====================================================
+       КОНТЕЙНЕР ПРИЛОЖЕНИЯ И СИСТЕМА ЭКРАНОВ
+    ===================================================== */
+    #app {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Каждый экран — абсолютный слой */
+    .screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg2);
+      /* Отступ снизу: MainButton Telegram ~56px + safe area */
+      padding-bottom: calc(68px + var(--safe-bottom));
+      /* По умолчанию скрыт справа */
+      transform: translateX(100%);
+      will-change: transform;
+    }
+
+    /* Активный экран */
+    .screen.active {
+      transform: translateX(0);
+    }
+
+    /* Анимация включается только при переходе */
+    .screen.anim {
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* =====================================================
+       ШАПКА ЭКРАНА
+    ===================================================== */
+    .s-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      min-height: 52px;
+      padding: 8px 16px;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--sep);
+    }
+
+    .s-title {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    /* =====================================================
+       СЕКЦИИ (белые карточки-группы)
+    ===================================================== */
+    .section {
+      background: var(--section);
+      border-radius: var(--radius);
+      margin: 0 16px 12px;
+      overflow: hidden;
+    }
+
+    .s-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hint);
+      padding: 16px 16px 6px;
+    }
+
+    /* =====================================================
+       ПОИСК
+    ===================================================== */
+    .search-bar {
+      padding: 8px 16px;
+      background: var(--bg2);
+    }
+
+    .search-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--section);
+      border-radius: var(--radius);
+      padding: 0 12px;
+      height: 44px;
+    }
+
+    .search-inner svg { color: var(--hint); flex-shrink: 0; }
+
+    .search-inner input {
+      flex: 1;
+      border: none;
+      background: none;
+      font-size: 16px; /* 16px — iOS не зумит */
+      color: var(--text);
+    }
+
+    .search-inner input::placeholder { color: var(--hint); }
+
+    .search-clear {
+      background: var(--hint);
+      color: white;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* =====================================================
+       СЕТКА КАТЕГОРИЙ (главный экран)
+    ===================================================== */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--sep);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 0 16px 12px;
+    }
+
+    .cat-item {
+      background: var(--section);
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      min-height: 80px;
+      transition: background 0.1s;
+    }
+
+    .cat-item:active { background: var(--bg2); }
+
+    .cat-d {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .cat-sub {
+      font-size: 11px;
+      color: var(--hint);
+    }
+
+    /* =====================================================
+       СПИСОК ТОВАРОВ
+    ===================================================== */
+    .prod-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--section);
+      border-bottom: 0.5px solid var(--sep);
+      cursor: pointer;
+      min-height: 72px;
+      transition: background 0.1s;
+    }
+
+    .prod-item:last-child { border-bottom: none; }
+    .prod-item:active { background: var(--bg2); }
+
+    .pi-info { flex: 1; min-width: 0; }
+
+    .pi-article {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .pi-params {
+      font-size: 13px;
+      color: var(--hint);
+    }
+
+    .pi-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .pi-price {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* =====================================================
+       БЕЙДЖИ НАЛИЧИЯ
+    ===================================================== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    .b-ok   { background: rgba(52,199,89,0.15);  color: #1e8a3a; }
+    .b-soon { background: rgba(255,149,0,0.15);  color: #b36b00; }
+    .b-ask  { background: rgba(142,142,147,0.15); color: var(--hint); }
+
+    @media (prefers-color-scheme: dark) {
+      .b-ok   { color: #30d158; }
+      .b-soon { color: #ff9f0a; }
+    }
+
+    /* Шеврон */
+    .chev { color: var(--sep); font-size: 20px; flex-shrink: 0; }
+
+    /* =====================================================
+       КАРТОЧКА ТОВАРА — SVG и параметры
+    ===================================================== */
+    .svg-wrap {
+      background: var(--section);
+      padding: 20px 16px;
+      margin-bottom: 12px;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--sep);
+      min-height: 44px;
+    }
+
+    .param-row:last-child { border-bottom: none; }
+
+    .pr-label { font-size: 15px; color: var(--text); }
+
+    .pr-val {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--hint);
+      text-align: right;
+    }
+
+    .pr-val.v-accent  { color: var(--orange); font-weight: 700; font-size: 17px; }
+    .pr-val.v-article { color: var(--accent);  font-weight: 700; font-size: 16px; }
+
+    /* =====================================================
+       КНОПКИ
+    ===================================================== */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      transition: opacity 0.1s, transform 0.1s;
+    }
+
+    .btn:active { opacity: 0.8; transform: scale(0.98); }
+
+    .btn-primary   { background: var(--btn-bg); color: var(--btn-text); }
+    .btn-secondary { background: var(--bg2); color: var(--accent); }
+    .btn-ghost     { background: var(--bg2); color: var(--text); }
+
+    /* =====================================================
+       КНОПКА «КАЛЬКУЛЯТОР» — ВХОД
+    ===================================================== */
+    .calc-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--section);
+      border-radius: var(--radius);
+      margin: 0 16px 12px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .calc-btn:active { background: var(--bg2); }
+
+    .calc-btn-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(42,171,238,0.12);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .cbi-title { font-size: 15px; font-weight: 600; }
+    .cbi-sub   { font-size: 13px; color: var(--hint); margin-top: 2px; }
+
+    /* =====================================================
+       КАЛЬКУЛЯТОР — ПРОГРЕСС-БАР
+    ===================================================== */
+    .calc-progress {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--section);
+      margin-bottom: 12px;
+    }
+
+    .cp-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .cp-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .cp-circle.c-active   { background: var(--accent); color: white; }
+    .cp-circle.c-done     { background: var(--green);  color: white; }
+    .cp-circle.c-inactive { background: var(--bg2);    color: var(--hint); border: 1.5px solid var(--sep); }
+
+    .cp-label { font-size: 12px; line-height: 1.3; color: var(--hint); }
+    .cp-label.l-active { color: var(--accent); font-weight: 600; }
+    .cp-label.l-done   { color: var(--green); }
+
+    .cp-line      { flex: 1; height: 2px; background: var(--sep); margin: 0 4px; }
+    .cp-line.done { background: var(--green); }
+
+    /* =====================================================
+       КАЛЬКУЛЯТОР — ПОЛЯ ВВОДА
+    ===================================================== */
+    .field-wrap {
+      padding: 0 16px;
+      border-bottom: 0.5px solid var(--sep);
+    }
+
+    .field-wrap:last-child { border-bottom: none; }
+
+    .f-label {
+      font-size: 12px;
+      color: var(--hint);
+      padding-top: 10px;
+      padding-bottom: 2px;
+    }
+
+    .f-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .f-input {
+      flex: 1;
+      border: none;
+      background: none;
+      font-size: 16px;
+      color: var(--text);
+      padding: 8px 0;
+    }
+
+    .f-input::placeholder { color: var(--hint); }
+    .f-input.err { color: var(--red); }
+
+    .f-unit {
+      font-size: 14px;
+      color: var(--hint);
+      flex-shrink: 0;
+    }
+
+    .f-toggle {
+      display: flex;
+      background: var(--bg2);
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .f-toggle button {
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      background: none;
+      color: var(--hint);
+    }
+
+    .f-toggle button.on {
+      background: var(--accent);
+      color: white;
+    }
+
+    .f-hint {
+      font-size: 12px;
+      color: var(--hint);
+      padding-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .f-err {
+      font-size: 12px;
+      color: var(--red);
+      padding-bottom: 8px;
+    }
+
+    /* Плашка «из шага 1» */
+    .step1-box {
+      background: rgba(42,171,238,0.08);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin: 0 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .s1b-text { font-size: 14px; line-height: 1.5; }
+    .s1b-text b { color: var(--accent); }
+
+    .s1b-btn {
+      background: none;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+      padding: 4px 0 4px 8px;
+    }
+
+    /* =====================================================
+       КАЛЬКУЛЯТОР — БЛОК РЕЗУЛЬТАТА
+    ===================================================== */
+    .calc-result {
+      background: var(--section);
+      border-radius: var(--radius);
+      margin: 0 16px 12px;
+      overflow: hidden;
+    }
+
+    .cr-header {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hint);
+      border-bottom: 0.5px solid var(--sep);
+    }
+
+    /* =====================================================
+       ЗАЯВКА (КОРЗИНА)
+    ===================================================== */
+    .cart-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--section);
+      border-bottom: 0.5px solid var(--sep);
+      gap: 10px;
+      min-height: 64px;
+    }
+
+    .cart-item:last-child { border-bottom: none; }
+
+    .ci-info { flex: 1; }
+    .ci-art  { font-size: 15px; font-weight: 600; color: var(--accent); }
+    .ci-par  { font-size: 13px; color: var(--hint); margin-top: 2px; }
+
+    .ci-del {
+      background: rgba(255,59,48,0.1);
+      color: var(--red);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ci-del:active { opacity: 0.6; }
+
+    .comment-box {
+      background: var(--section);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin: 0 16px 12px;
+    }
+
+    .cb-label { font-size: 12px; color: var(--hint); margin-bottom: 8px; }
+
+    .cb-input {
+      width: 100%;
+      min-height: 76px;
+      border: none;
+      background: var(--bg2);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--text);
+      resize: none;
+    }
+
+    .cb-input::placeholder { color: var(--hint); }
+
+    /* =====================================================
+       INFO-СТРОКА (иконка + текст)
+    ===================================================== */
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--section);
+      border-radius: var(--radius);
+      margin: 0 16px 10px;
+      font-size: 13px;
+      color: var(--hint);
+      line-height: 1.5;
+    }
+
+    .info-row svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* =====================================================
+       ЧИПЫ-ФИЛЬТРЫ
+    ===================================================== */
+    .chips {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--bg2);
+    }
+
+    .chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 14px;
+      background: var(--section);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chip:active { opacity: 0.7; }
+
+    /* =====================================================
+       НЕДАВНО СМОТРЕЛИ
+    ===================================================== */
+    .recent-list {
+      display: flex;
+      gap: 10px;
+      padding: 4px 16px 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .recent-list::-webkit-scrollbar { display: none; }
+
+    .recent-card {
+      flex-shrink: 0;
+      width: 130px;
+      background: var(--section);
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+      transition: opacity 0.1s;
+    }
+
+    .recent-card:active { opacity: 0.7; }
+
+    .rc-art  { font-size: 13px; font-weight: 700; color: var(--accent); }
+    .rc-par  { font-size: 11px; color: var(--hint); margin-top: 4px; }
+
+    /* =====================================================
+       ПУСТОЕ СОСТОЯНИЕ
+    ===================================================== */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 60px 32px;
+      text-align: center;
+    }
+
+    .empty-ico   { font-size: 48px; }
+    .empty-title { font-size: 17px; font-weight: 600; }
+    .empty-sub   { font-size: 14px; color: var(--hint); line-height: 1.5; }
+
+    /* =====================================================
+       УТИЛИТЫ
+    ===================================================== */
+    .gap16 { padding: 0 16px; }
+    .mb12  { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Экраны рендерятся динамически через JS -->
+  <div class="screen" id="s-home"></div>
+  <div class="screen" id="s-search"></div>
+  <div class="screen" id="s-catalog"></div>
+  <div class="screen" id="s-product"></div>
+  <div class="screen" id="s-calc"></div>
+  <div class="screen" id="s-cart"></div>
+</div>
+
+<script>
+/* =====================================================
+   ДАННЫЕ КАТАЛОГА
+   Чтобы добавить товар — добавить объект в массив.
+   Поля:
+     article    — строка «ГЦ-D/d-L»
+     D          — диаметр гильзы (мм)
+     d          — диаметр штока (мм)
+     L          — ход штока (мм)
+     P          — рабочее давление (МПа)
+     price_from — цена от (руб), null = «По запросу»
+     stock      — 'available' | 'order' | 'custom'
+     lead_time  — строка срока (показывается в карточке)
+===================================================== */
+const PRODUCTS = [
+  // ── Ø32 ──────────────────────────────────────────
+  { article:'ГЦ-32/20-100',  D:32,  d:20,  L:100,  P:16, price_from:2400,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-32/20-200',  D:32,  d:20,  L:200,  P:16, price_from:2700,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-32/20-300',  D:32,  d:20,  L:300,  P:16, price_from:3200,  stock:'order',     lead_time:'7–10 дней'   },
+
+  // ── Ø40 ──────────────────────────────────────────
+  { article:'ГЦ-40/25-100',  D:40,  d:25,  L:100,  P:16, price_from:2900,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-40/25-200',  D:40,  d:25,  L:200,  P:16, price_from:3400,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-40/25-300',  D:40,  d:25,  L:300,  P:16, price_from:3900,  stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-40/25-500',  D:40,  d:25,  L:500,  P:16, price_from:4700,  stock:'order',     lead_time:'7–10 дней'   },
+
+  // ── Ø50 ──────────────────────────────────────────
+  { article:'ГЦ-50/32-200',  D:50,  d:32,  L:200,  P:16, price_from:3900,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-50/32-300',  D:50,  d:32,  L:300,  P:16, price_from:4500,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-50/32-500',  D:50,  d:32,  L:500,  P:16, price_from:5600,  stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-50/32-800',  D:50,  d:32,  L:800,  P:16, price_from:7100,  stock:'order',     lead_time:'7–10 дней'   },
+
+  // ── Ø63 ──────────────────────────────────────────
+  { article:'ГЦ-63/40-200',  D:63,  d:40,  L:200,  P:16, price_from:4800,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-63/40-300',  D:63,  d:40,  L:300,  P:16, price_from:5500,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-63/40-500',  D:63,  d:40,  L:500,  P:16, price_from:6800,  stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-63/40-800',  D:63,  d:40,  L:800,  P:16, price_from:8600,  stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-63/40-1000', D:63,  d:40,  L:1000, P:16, price_from:10200, stock:'custom',    lead_time:'Под заказ'   },
+
+  // ── Ø80 ──────────────────────────────────────────
+  { article:'ГЦ-80/50-200',  D:80,  d:50,  L:200,  P:16, price_from:6600,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-80/50-300',  D:80,  d:50,  L:300,  P:16, price_from:7500,  stock:'available', lead_time:'В наличии'   },
+  { article:'ГЦ-80/50-500',  D:80,  d:50,  L:500,  P:16, price_from:9400,  stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-80/50-800',  D:80,  d:50,  L:800,  P:25, price_from:13200, stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-80/50-1000', D:80,  d:50,  L:1000, P:25, price_from:15800, stock:'custom',    lead_time:'Под заказ'   },
+
+  // ── Ø100 ─────────────────────────────────────────
+  { article:'ГЦ-100/63-300', D:100, d:63,  L:300,  P:16, price_from:10400, stock:'order',     lead_time:'7–10 дней'   },
+  { article:'ГЦ-100/63-500', D:100, d:63,  L:500,  P:16, price_from:13200, stock:'order',     lead_time:'10–14 дней'  },
+  { article:'ГЦ-100/63-800', D:100, d:63,  L:800,  P:25, price_from:17900, stock:'custom',    lead_time:'Под заказ'   },
+
+  // ── Ø125 ─────────────────────────────────────────
+  { article:'ГЦ-125/80-300', D:125, d:80,  L:300,  P:25, price_from:15100, stock:'order',     lead_time:'10–14 дней'  },
+  { article:'ГЦ-125/80-500', D:125, d:80,  L:500,  P:25, price_from:19800, stock:'custom',    lead_time:'Под заказ'   },
+
+  // ── Ø160 ─────────────────────────────────────────
+  { article:'ГЦ-160/100-300',D:160, d:100, L:300,  P:25, price_from:21000, stock:'order',     lead_time:'10–14 дней'  },
+  { article:'ГЦ-160/100-500',D:160, d:100, L:500,  P:25, price_from:26500, stock:'custom',    lead_time:'Под заказ'   },
+
+  // ── Ø200 ─────────────────────────────────────────
+  { article:'ГЦ-200/125-500',D:200, d:125, L:500,  P:25, price_from:34000, stock:'custom',    lead_time:'Под заказ'   },
+  { article:'ГЦ-200/125-800',D:200, d:125, L:800,  P:25, price_from:43500, stock:'custom',    lead_time:'Под заказ'   },
+];
+
+/* Стандартный ряд диаметров ГОСТ 3822-79 */
+const GOST_D = [32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320];
+
+/* Категории для главного экрана */
+const CATS = [
+  { label:'Ø32',   D:32,  Dmax:32  },
+  { label:'Ø40',   D:40,  Dmax:40  },
+  { label:'Ø50',   D:50,  Dmax:50  },
+  { label:'Ø63',   D:63,  Dmax:63  },
+  { label:'Ø80',   D:80,  Dmax:80  },
+  { label:'Ø100+', D:100, Dmax:999 },
+];
+
+/* =====================================================
+   СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+===================================================== */
+const S = {
+  stack:      [],       // стек экранов: ['home', 'catalog', 'product']
+  cart:       [],       // позиции в заявке
+  recent:     [],       // недавно просмотренные (макс. 10)
+  scrollPos:  {},       // позиции скролла { screenId: px }
+
+  // Каталог
+  catFilter:  { D: null, Dmax: null, P: null },
+
+  // Текущий товар
+  product:    null,
+
+  // Калькулятор
+  calcStep:   1,
+  calcUnit:   'N',      // 'N' | 'kg'
+  cF: '', cP: '',       // шаг 1
+  cD: '', cd: '', cL: '', ct: '',  // шаг 2
+  res1: null,           // { D_min, D_gost }
+  res2: null,           // { V_p, V_s, Q, t_ret, F_push, F_pull, article }
+};
+
+/* =====================================================
+   ИНИЦИАЛИЗАЦИЯ TELEGRAM SDK
+===================================================== */
+const tg = window.Telegram?.WebApp;
+const hasTG = !!tg;
+
+if (hasTG) {
+  tg.ready();
+  tg.expand();
+
+  // Цвета под тему (не критично если не поддерживается)
+  try { tg.setHeaderColor('#ffffff'); } catch(e) {}
+  try { tg.setBackgroundColor('#f2f2f7'); } catch(e) {}
+
+  // Пересчёт высоты при появлении клавиатуры
+  tg.onEvent('viewportChanged', () => {
+    document.documentElement.style.setProperty('--vh', tg.viewportHeight + 'px');
+  });
+
+  // BackButton — навигация назад
+  tg.BackButton.onClick(goBack);
+
+  // Восстанавливаем корзину и историю из CloudStorage
+  try {
+    tg.CloudStorage.getItem('cart_v2',    (e, v) => { if (!e && v) S.cart   = JSON.parse(v); });
+    tg.CloudStorage.getItem('recent_v2',  (e, v) => { if (!e && v) S.recent = JSON.parse(v); });
+  } catch(e) {}
+
+} else {
+  // Вне Telegram — localStorage fallback
+  try {
+    const c = localStorage.getItem('tma_cart_v2');
+    const r = localStorage.getItem('tma_recent_v2');
+    if (c) S.cart   = JSON.parse(c);
+    if (r) S.recent = JSON.parse(r);
+  } catch(e) {}
+}
+
+/* =====================================================
+   УТИЛИТЫ
+===================================================== */
+
+/** Форматировать число в рублях */
+function rub(n) {
+  return n.toLocaleString('ru-RU') + '\u00a0₽';
+}
+
+/** Вычислить параметры цилиндра (D, d, L — мм; t — сек; P — МПа) */
+function calcCyl(D, d, L, t, P) {
+  const r  = D / 2000;
+  const rs = d / 2000;
+  const l  = L / 1000;
+  const Vp = Math.PI * r * r * l * 1000;
+  const Vs = Math.PI * (r * r - rs * rs) * l * 1000;
+  const Q  = t ? Vp / t * 60 : null;
+  const tr = (Q && Q > 0) ? Vs / (Q / 60) : null;
+  const Fp = P * 1e6 * Math.PI * r * r;
+  const Fs = P * 1e6 * Math.PI * (r * r - rs * rs);
+  return {
+    V_p:   +Vp.toFixed(3),
+    V_s:   +Vs.toFixed(3),
+    Q:     Q  ? +Q.toFixed(1)  : null,
+    t_ret: tr ? +tr.toFixed(1) : null,
+    F_push: +Fp.toFixed(0),
+    F_pull: +Fs.toFixed(0),
+  };
+}
+
+/** Найти ближайший больший ГОСТ-диаметр */
+function gostD(Dmin) {
+  return GOST_D.find(d => d >= Dmin) || 320;
+}
+
+/** HTML бейджа наличия */
+function badge(p) {
+  if (p.stock === 'available') return `<span class="badge b-ok">● ${p.lead_time}</span>`;
+  if (p.stock === 'order')     return `<span class="badge b-soon">◐ ${p.lead_time}</span>`;
+  return `<span class="badge b-ask">○ ${p.lead_time}</span>`;
+}
+
+/** SVG-схема гидроцилиндра (D, d, L — только для подписей) */
+function cylinderSVG(D, d, L) {
+  const bW = 170, bH = 60, bX = 28, bY = 28;
+  const cy = bY + bH / 2;
+  const dR = Math.max(0.2, Math.min(0.8, d / D));
+  const rH = Math.round(bH * dR * 0.85);
+  const rX = bX + bW, rY = cy - rH / 2;
+
+  return `<svg viewBox="0 0 ${bX + bW + 96} ${bY + bH + 52}"
+    width="100%" style="display:block;max-height:145px;overflow:visible">
+
+    <!-- Тело цилиндра -->
+    <rect x="${bX}" y="${bY}" width="${bW}" height="${bH}" rx="7"
+      fill="rgba(42,171,238,0.08)" stroke="#94a3b8" stroke-width="1.5"/>
+    <!-- Крышки -->
+    <rect x="${bX}"           y="${bY}" width="18" height="${bH}" rx="5"
+      fill="rgba(42,171,238,0.15)" stroke="#94a3b8" stroke-width="1.5"/>
+    <rect x="${bX + bW - 18}" y="${bY}" width="18" height="${bH}" rx="5"
+      fill="rgba(42,171,238,0.15)" stroke="#94a3b8" stroke-width="1.5"/>
+
+    <!-- Шток -->
+    <rect x="${rX}" y="${rY}" width="75" height="${rH}" rx="4"
+      fill="rgba(249,115,22,0.15)" stroke="#f97316" stroke-width="1.5"/>
+    <circle cx="${rX + 75}" cy="${cy}" r="5" fill="#f97316" opacity="0.6"/>
+
+    <!-- Ось D (вертикаль, слева) -->
+    <line x1="${bX - 10}" y1="${bY}"      x2="${bX - 10}" y2="${bY + bH}"
+      stroke="#2aabee" stroke-width="1.5"/>
+    <line x1="${bX - 14}" y1="${bY}"      x2="${bX - 6}"  y2="${bY}"      stroke="#2aabee" stroke-width="1.5"/>
+    <line x1="${bX - 14}" y1="${bY + bH}" x2="${bX - 6}"  y2="${bY + bH}" stroke="#2aabee" stroke-width="1.5"/>
+    <text x="${bX - 23}" y="${cy - 6}" font-size="11" fill="#2aabee" font-weight="700"
+      font-family="Arial,sans-serif">D</text>
+    <text x="${bX - 23}" y="${cy + 8}" font-size="10" fill="#2aabee"
+      font-family="Arial,sans-serif">${D}</text>
+
+    <!-- Ось d (вертикаль, на штоке) -->
+    <line x1="${rX + 75 + 10}" y1="${rY}"      x2="${rX + 75 + 10}" y2="${rY + rH}"
+      stroke="#f97316" stroke-width="1.5"/>
+    <line x1="${rX + 75 + 6}"  y1="${rY}"      x2="${rX + 75 + 14}" y2="${rY}"      stroke="#f97316" stroke-width="1.5"/>
+    <line x1="${rX + 75 + 6}"  y1="${rY + rH}" x2="${rX + 75 + 14}" y2="${rY + rH}" stroke="#f97316" stroke-width="1.5"/>
+    <text x="${rX + 75 + 15}" y="${cy - 6}" font-size="11" fill="#f97316" font-weight="700"
+      font-family="Arial,sans-serif">d</text>
+    <text x="${rX + 75 + 15}" y="${cy + 8}" font-size="10" fill="#f97316"
+      font-family="Arial,sans-serif">${d}</text>
+
+    <!-- Ось L (горизонталь, снизу тела) -->
+    <line x1="${bX + 18}"      y1="${bY + bH + 16}" x2="${bX + bW - 18}" y2="${bY + bH + 16}"
+      stroke="#a78bfa" stroke-width="1.5"/>
+    <line x1="${bX + 18}"      y1="${bY + bH + 11}" x2="${bX + 18}"      y2="${bY + bH + 21}" stroke="#a78bfa" stroke-width="1.5"/>
+    <line x1="${bX + bW - 18}" y1="${bY + bH + 11}" x2="${bX + bW - 18}" y2="${bY + bH + 21}" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="${(bX + 18 + bX + bW - 18) / 2 - 6}" y="${bY + bH + 32}" font-size="11"
+      fill="#a78bfa" font-weight="700" font-family="Arial,sans-serif">L</text>
+    <text x="${(bX + 18 + bX + bW - 18) / 2 + 8}" y="${bY + bH + 32}" font-size="10"
+      fill="#a78bfa" font-family="Arial,sans-serif">${L} мм</text>
+  </svg>`;
+}
+
+/* =====================================================
+   СОХРАНЕНИЕ ДАННЫХ
+===================================================== */
+function saveCart() {
+  const json = JSON.stringify(S.cart);
+  if (hasTG) try { tg.CloudStorage.setItem('cart_v2', json); } catch(e) {}
+  else try { localStorage.setItem('tma_cart_v2', json); } catch(e) {}
+}
+
+function saveRecent() {
+  const json = JSON.stringify(S.recent.slice(0, 10));
+  if (hasTG) try { tg.CloudStorage.setItem('recent_v2', json); } catch(e) {}
+  else try { localStorage.setItem('tma_recent_v2', json); } catch(e) {}
+}
+
+function addRecent(p) {
+  S.recent = S.recent.filter(x => x.article !== p.article);
+  S.recent.unshift(p);
+  if (S.recent.length > 10) S.recent.pop();
+  saveRecent();
+}
+
+/* =====================================================
+   КОРЗИНА
+===================================================== */
+function cartAdd(p) {
+  if (S.cart.find(x => x.article === p.article)) return false;
+  S.cart.push(p);
+  saveCart();
+  return true;
+}
+
+function cartRemove(article) {
+  S.cart = S.cart.filter(x => x.article !== article);
+  saveCart();
+}
+
+/* =====================================================
+   НАВИГАЦИЯ
+===================================================== */
+function go(id, dir) {
+  dir = dir || 'fwd';
+  // Сохраняем скролл текущего экрана
+  const cur = S.stack[S.stack.length - 1];
+  if (cur) {
+    const el = document.getElementById('s-' + cur);
+    if (el) S.scrollPos[cur] = el.scrollTop;
+  }
+
+  S.stack.push(id);
+
+  if (hasTG) {
+    if (S.stack.length > 1) tg.BackButton.show();
+    else tg.BackButton.hide();
+  }
+
+  renderAndShow(id, dir, cur);
+}
+
+function goBack() {
+  if (S.stack.length <= 1) {
+    if (hasTG) tg.close();
+    return;
+  }
+  const leaving = S.stack.pop();
+  const target  = S.stack[S.stack.length - 1];
+
+  if (hasTG) {
+    if (S.stack.length <= 1) tg.BackButton.hide();
+    else tg.BackButton.show();
+  }
+
+  renderAndShow(target, 'back', leaving);
+}
+
+/**
+ * Отрисовать экран и запустить анимацию перехода.
+ * leaving — id уходящего экрана (строка или null)
+ */
+function renderAndShow(id, dir, leaving) {
+  draw(id);
+
+  const next  = document.getElementById('s-' + id);
+  const prev  = leaving ? document.getElementById('s-' + leaving) : null;
+
+  if (!next) return;
+
+  // Стартовая позиция входящего
+  next.style.transition = 'none';
+  next.style.transform  = dir === 'back' ? 'translateX(-30%)' : 'translateX(100%)';
+  next.classList.add('active');
+  next.offsetHeight; // reflow
+
+  // Анимация
+  next.classList.add('anim');
+  next.style.transform = 'translateX(0)';
+
+  if (prev && prev !== next) {
+    prev.classList.add('anim');
+    prev.style.transform = dir === 'back' ? 'translateX(100%)' : 'translateX(-30%)';
+  }
+
+  setTimeout(() => {
+    if (prev && prev !== next) {
+      prev.style.transform = 'translateX(100%)';
+      prev.classList.remove('active', 'anim');
+    }
+    next.classList.remove('anim');
+
+    // Восстанавливаем скролл при возврате
+    if (dir === 'back' && S.scrollPos[id] != null) {
+      next.scrollTop = S.scrollPos[id];
+    }
+
+    setMainBtn(id);
+  }, 260);
+}
+
+/* =====================================================
+   ГЛАВНАЯ КНОПКА TELEGRAM
+===================================================== */
+function setMainBtn(id) {
+  if (!hasTG) return;
+  tg.MainButton.offClick();
+
+  if (id === 'product') {
+    const p = S.product;
+    if (!p) return tg.MainButton.hide();
+    const has = !!S.cart.find(x => x.article === p.article);
+    if (has) {
+      tg.MainButton.setText(`Перейти к заявке (${S.cart.length})`);
+      tg.MainButton.setParams({ color: '#34c759', text_color: '#ffffff' });
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => go('cart'));
+    } else {
+      tg.MainButton.setText('+ Добавить в заявку');
+      tg.MainButton.setParams({ color: '#2aabee', text_color: '#ffffff' });
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => {
+        if (cartAdd(p)) {
+          tg.HapticFeedback?.notificationOccurred('success');
+          draw('product');
+          setMainBtn('product');
+        } else {
+          tg.HapticFeedback?.notificationOccurred('warning');
+        }
+      });
+    }
+
+  } else if (id === 'cart') {
+    if (S.cart.length === 0) {
+      tg.MainButton.setText('Вернуться в каталог');
+      tg.MainButton.setParams({ color: '#8e8e93', text_color: '#ffffff' });
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => { S.stack = []; go('home'); });
+    } else {
+      tg.MainButton.setText('Отправить менеджеру');
+      tg.MainButton.setParams({ color: '#2aabee', text_color: '#ffffff' });
+      tg.MainButton.show();
+      tg.MainButton.onClick(sendOrder);
+    }
+
+  } else if (id === 'calc') {
+    updateCalcBtn();
+
+  } else {
+    tg.MainButton.hide();
+  }
+}
+
+function updateCalcBtn() {
+  if (!hasTG) return;
+  tg.MainButton.offClick();
+
+  if (S.calcStep === 1) {
+    tg.MainButton.setText('Перейти к шагу 2 →');
+    tg.MainButton.setParams({ color: '#2aabee', text_color: '#ffffff' });
+    tg.MainButton.show();
+    tg.MainButton.onClick(calcGoStep2);
+  } else if (S.calcStep === 2 && S.res2) {
+    tg.MainButton.setText('Добавить в заявку');
+    tg.MainButton.setParams({ color: '#2aabee', text_color: '#ffffff' });
+    tg.MainButton.show();
+    tg.MainButton.onClick(calcAddToCart);
+  } else {
+    tg.MainButton.hide();
+  }
+}
+
+/* =====================================================
+   ОТПРАВКА ЗАЯВКИ
+===================================================== */
+function sendOrder() {
+  const comment = document.getElementById('cart-comment')?.value || '';
+  const user    = hasTG ? tg.initDataUnsafe?.user : null;
+
+  const data = {
+    items: S.cart.map(p => ({
+      article: p.article, D: p.D, d: p.d, L: p.L, P: p.P,
+      fromCalc: p.fromCalc || false,
+    })),
+    comment: comment || undefined,
+    user: user ? {
+      id:       user.id,
+      name:     [user.first_name, user.last_name].filter(Boolean).join(' '),
+      username: user.username,
+    } : undefined,
+  };
+
+  if (hasTG) {
+    try {
+      tg.sendData(JSON.stringify(data));
+      // sendData автоматически закрывает TMA и передаёт данные боту
+    } catch (e) {
+      // Если открыто не из бота — sendData не работает
+      tg.showAlert(
+        '✓ Данные заявки готовы.\n\n' +
+        'Для полноценной отправки откройте приложение через бота @pgidravlikabot',
+        () => {}
+      );
+    }
+  } else {
+    alert('Заявка (тест):\n' + JSON.stringify(data, null, 2));
+  }
+}
+
+/* =====================================================
+   РЕНДЕРИНГ ЭКРАНОВ
+===================================================== */
+function draw(id) {
+  const el = document.getElementById('s-' + id);
+  if (!el) return;
+
+  switch (id) {
+    case 'home':    el.innerHTML = drawHome();    break;
+    case 'search':  el.innerHTML = drawSearch(S.searchQ || ''); break;
+    case 'catalog': el.innerHTML = drawCatalog(); break;
+    case 'product': el.innerHTML = drawProduct(); break;
+    case 'calc':    el.innerHTML = drawCalc();    break;
+    case 'cart':    el.innerHTML = drawCart();    break;
+  }
+
+  bindEvents(id, el);
+}
+
+/* ── ГЛАВНЫЙ ЭКРАН ─────────────────────────────── */
+function drawHome() {
+  const cats = CATS.map(c => `
+    <div class="cat-item" data-a="cat" data-d="${c.D}" data-dm="${c.Dmax}">
+      <span class="cat-d">${c.label}</span>
+      <span class="cat-sub">гильза</span>
+    </div>`).join('');
+
+  const n = S.cart.length;
+  const cartRow = n > 0 ? `
+    <div class="s-label">Ваша заявка</div>
+    <div class="section" style="margin-top:0">
+      <div class="prod-item" data-a="go-cart">
+        <div style="width:40px;height:40px;background:rgba(42,171,238,0.12);border-radius:12px;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="20" height="20" fill="none" stroke="#2aabee" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </div>
+        <div class="pi-info">
+          <div class="pi-article">Моя заявка</div>
+          <div class="pi-params">${n} позиц${n===1?'ия':n<5?'ии':'ий'}</div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+    </div>` : '';
+
+  const recentHtml = S.recent.length > 0 ? `
+    <div class="s-label">Недавно смотрели</div>
+    <div class="recent-list">
+      ${S.recent.slice(0,6).map(p => `
+        <div class="recent-card" data-a="prod" data-art="${p.article}">
+          <div class="rc-art">${p.article}</div>
+          <div class="rc-par">Ø${p.D}/${p.d} · ${p.L}\u00a0мм</div>
+        </div>`).join('')}
+    </div>` : '';
+
+  return `
+    <div class="search-bar">
+      <div class="search-inner" data-a="go-search" style="cursor:pointer">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span style="color:var(--hint);font-size:16px;flex:1">Артикул или параметры…</span>
+      </div>
+    </div>
+
+    <div class="s-label">Диаметр гильзы</div>
+    <div class="cat-grid">${cats}</div>
+
+    <div class="calc-btn" data-a="go-calc">
+      <div class="calc-btn-icon">
+        <svg width="22" height="22" fill="none" stroke="#2aabee" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="4" y="2" width="16" height="20" rx="2"/>
+          <line x1="8" y1="6" x2="16" y2="6"/>
+          <line x1="8" y1="10" x2="12" y2="10"/>
+          <line x1="8" y1="14" x2="16" y2="14"/>
+          <line x1="8" y1="18" x2="12" y2="18"/>
+        </svg>
+      </div>
+      <div>
+        <div class="cbi-title">Подобрать по параметрам</div>
+        <div class="cbi-sub">Введите усилие и давление</div>
+      </div>
+      <span class="chev">›</span>
+    </div>
+
+    ${cartRow}
+    ${recentHtml}
+
+    <div style="padding:20px 16px;text-align:center">
+      <div style="font-size:13px;color:var(--hint)">Промгидравлика · p-gidravlika.ru</div>
+      <div style="font-size:12px;color:var(--hint);margin-top:4px">+7 (3412) 77-57-04 · Пн–Пт 8:30–17:00</div>
+    </div>`;
+}
+
+/* ── ПОИСК ─────────────────────────────────────── */
+function drawSearch(q) {
+  const qL = q.toLowerCase().trim();
+  const res = qL
+    ? PRODUCTS.filter(p =>
+        p.article.toLowerCase().includes(qL) ||
+        String(p.D).includes(qL) ||
+        String(p.d).includes(qL) ||
+        String(p.L).includes(qL))
+    : [];
+
+  let body;
+  if (res.length > 0) {
+    body = `<div class="s-label">Результаты (${res.length})</div>
+      <div class="section" style="margin-top:0">${res.map(prodRow).join('')}</div>`;
+  } else if (qL) {
+    body = `<div class="empty">
+      <div class="empty-ico">🔍</div>
+      <div class="empty-title">Ничего не найдено</div>
+      <div class="empty-sub">Нет артикула «${q}».<br>Опишите задачу — инженер подберёт</div>
+      <button class="btn btn-secondary" style="width:auto;padding:0 24px" data-a="go-mgr">
+        Написать менеджеру
+      </button>
+    </div>`;
+  } else {
+    body = `<div class="empty" style="padding-top:32px">
+      <div style="font-size:36px">🔍</div>
+      <div class="empty-sub">Введите артикул, диаметр или ход<br>например: <b>ГЦ-63</b> или <b>300</b></div>
+    </div>`;
+  }
+
+  return `
+    <div class="s-header" style="gap:8px;padding:8px 16px">
+      <div class="search-inner" style="flex:1;height:40px">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-input-field" id="search-inp" type="search"
+          placeholder="Артикул или параметры" value="${q}" autocomplete="off" inputmode="search">
+        ${q ? `<button class="search-clear" data-a="srch-clr">✕</button>` : ''}
+      </div>
+    </div>
+    ${body}`;
+}
+
+/* ── КАТАЛОГ ──────────────────────────────────── */
+function drawCatalog() {
+  const f = S.catFilter;
+
+  const items = PRODUCTS.filter(p => {
+    if (f.D    != null && p.D < f.D)                   return false;
+    if (f.Dmax != null && f.Dmax !== f.D && p.D > f.Dmax) return false;
+    if (f.D    != null && f.Dmax === f.D && p.D !== f.D)  return false;
+    if (f.P    != null && p.P !== f.P)                 return false;
+    return true;
+  });
+
+  const title = f.D != null
+    ? (f.Dmax != null && f.Dmax !== f.D ? `Ø${f.D}–${f.Dmax}\u00a0мм` : `Ø${f.D}\u00a0мм`)
+    : 'Каталог';
+
+  const chips = [
+    { label: 'Все',    val: null },
+    { label: '16 МПа', val: 16   },
+    { label: '25 МПа', val: 25   },
+  ].map(c => `
+    <div class="chip ${f.P === c.val ? 'active' : ''}"
+      data-a="flt-p" data-val="${c.val ?? ''}">
+      ${c.label}
+    </div>`).join('');
+
+  const list = items.length > 0
+    ? `<div class="section" style="margin-top:0">${items.map(prodRow).join('')}</div>`
+    : `<div class="empty">
+        <div class="empty-ico">😶</div>
+        <div class="empty-title">Нет позиций</div>
+        <div class="empty-sub">Измените фильтр или запросите нестандарт</div>
+      </div>`;
+
+  return `
+    <div class="s-header">
+      <div class="s-title" style="text-align:left;font-size:15px">Гильза ${title}</div>
+    </div>
+    <div class="chips">
+      ${chips}
+      <div class="chip" data-a="go-calc">⚙&nbsp;Калькулятор</div>
+    </div>
+    ${list}`;
+}
+
+/* ── Строка в списке товаров (переиспользуется) ── */
+function prodRow(p) {
+  return `
+    <div class="prod-item" data-a="prod" data-art="${p.article}">
+      <div class="pi-info">
+        <div class="pi-article">${p.article}</div>
+        <div class="pi-params">Ø${p.D} / Ø${p.d} · ${p.L}\u00a0мм · ${p.P}\u00a0МПа</div>
+      </div>
+      <div class="pi-right">
+        <span class="pi-price">${p.price_from ? 'от ' + rub(p.price_from) : 'По запросу'}</span>
+        ${badge(p)}
+      </div>
+      <span class="chev">›</span>
+    </div>`;
+}
+
+/* ── КАРТОЧКА ТОВАРА ──────────────────────────── */
+function drawProduct() {
+  const p = S.product;
+  if (!p) return `<div class="empty"><div class="empty-title">Товар не найден</div></div>`;
+
+  const c   = calcCyl(p.D, p.d, p.L, 3, p.P);
+  const has = !!S.cart.find(x => x.article === p.article);
+
+  const addBtn = !hasTG
+    ? `<div style="padding:12px 16px">
+        <button class="btn ${has ? 'btn-secondary' : 'btn-primary'}"
+          data-a="${has ? 'go-cart' : 'add-cart'}">
+          ${has ? `✓ В заявке (${S.cart.length}) — открыть` : '+ Добавить в заявку'}
+        </button>
+      </div>`
+    : (has ? `<div style="padding:12px 16px">
+        <button class="btn btn-secondary" data-a="go-cart">
+          ✓ В заявке (${S.cart.length}) — открыть
+        </button>
+      </div>` : '');
+
+  return `
+    <div class="s-header">
+      <div class="s-title">${p.article}</div>
+    </div>
+
+    <div class="svg-wrap">${cylinderSVG(p.D, p.d, p.L)}</div>
+
+    <div class="s-label">Параметры</div>
+    <div class="section" style="margin-top:0">
+      <div class="param-row">
+        <span class="pr-label">Артикул</span>
+        <span class="pr-val v-article">${p.article}</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Диаметр гильзы (D)</span>
+        <span class="pr-val v-accent">${p.D}\u00a0мм</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Диаметр штока (d)</span>
+        <span class="pr-val">${p.d}\u00a0мм</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Ход штока (L)</span>
+        <span class="pr-val">${p.L}\u00a0мм</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Рабочее давление</span>
+        <span class="pr-val">${p.P}\u00a0МПа</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Объём поршн. полости</span>
+        <span class="pr-val">${c.V_p}\u00a0л</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Расход насоса (t=3с)</span>
+        <span class="pr-val">${c.Q}\u00a0л/мин</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Толкающее усилие</span>
+        <span class="pr-val">${(c.F_push / 1000).toFixed(1)}\u00a0кН</span>
+      </div>
+    </div>
+
+    <div class="s-label">Цена и наличие</div>
+    <div class="section" style="margin-top:0">
+      <div class="param-row">
+        <span class="pr-label">Цена</span>
+        <span class="pr-val">${p.price_from ? 'от ' + rub(p.price_from) : 'По запросу'}</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Срок</span>
+        <span class="pr-val">${badge(p)}</span>
+      </div>
+    </div>
+
+    ${addBtn}
+
+    <div style="padding:0 16px 12px">
+      <button class="btn btn-ghost" data-a="share">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        Поделиться
+      </button>
+    </div>
+
+    <div class="info-row">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>Точная цена — в КП после заявки. Испытание при 150% рабочего давления. ГОСТ 3822-79.</span>
+    </div>`;
+}
+
+/* ── КАЛЬКУЛЯТОР ──────────────────────────────── */
+function drawCalc() {
+  const step = S.calcStep;
+
+  const progress = `
+    <div class="calc-progress">
+      <div class="cp-step">
+        <div class="cp-circle ${step === 1 ? 'c-active' : 'c-done'}">
+          ${step === 1 ? '1' : '✓'}
+        </div>
+        <div class="cp-label ${step === 1 ? 'l-active' : 'l-done'}">Шаг 1<br>Диаметр</div>
+      </div>
+      <div class="cp-line ${step > 1 ? 'done' : ''}"></div>
+      <div class="cp-step">
+        <div class="cp-circle ${step === 2 ? 'c-active' : 'c-inactive'}">2</div>
+        <div class="cp-label ${step === 2 ? 'l-active' : ''}">Шаг 2<br>Расчёт</div>
+      </div>
+    </div>`;
+
+  if (step === 1) {
+    const r = S.res1;
+    const resultBlock = r ? `
+      <div class="s-label">Результат</div>
+      <div class="calc-result">
+        <div class="cr-header">Подобранный диаметр</div>
+        <div class="param-row">
+          <span class="pr-label">Минимальный диаметр</span>
+          <span class="pr-val">${r.D_min}\u00a0мм</span>
+        </div>
+        <div class="param-row">
+          <span class="pr-label">Диаметр по ГОСТ</span>
+          <span class="pr-val v-accent" style="font-size:20px">${r.D_gost}\u00a0мм</span>
+        </div>
+        <div class="param-row">
+          <span class="pr-label">Предв. артикул</span>
+          <span class="pr-val v-article">ГЦ-${r.D_gost}/??-??</span>
+        </div>
+      </div>
+      <div class="info-row">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="9,11 12,14 22,4"/>
+          <path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/>
+        </svg>
+        <span>Уточните ход штока в шаге 2 для полного расчёта</span>
+      </div>` : '';
+
+    return `
+      <div class="s-header">
+        <div class="s-title">Калькулятор</div>
+      </div>
+      ${progress}
+      <div class="s-label">Подбор диаметра гильзы</div>
+      <div class="section" style="margin-top:0">
+        <div class="field-wrap">
+          <div class="f-label">Необходимое усилие</div>
+          <div class="f-row">
+            <input type="number" class="f-input" id="cf"
+              placeholder="${S.calcUnit === 'N' ? 'напр. 50000' : 'напр. 5000'}"
+              value="${S.cF}" inputmode="decimal">
+            <div class="f-toggle">
+              <button class="${S.calcUnit === 'N' ? 'on' : ''}" data-a="cu-N">Н</button>
+              <button class="${S.calcUnit === 'kg' ? 'on' : ''}" data-a="cu-kg">кг</button>
+            </div>
+          </div>
+          <div class="f-hint">1 кН = 1000 Н · 1 т ≈ 9810 Н</div>
+        </div>
+        <div class="field-wrap">
+          <div class="f-label">Рабочее давление</div>
+          <div class="f-row">
+            <input type="number" class="f-input" id="cp"
+              placeholder="10–35" value="${S.cP}" inputmode="decimal">
+            <span class="f-unit">МПа</span>
+          </div>
+          <div class="f-hint">Мобильная техника: 10–16 · Промышленность: 20–25</div>
+        </div>
+      </div>
+      ${resultBlock}
+      ${!hasTG ? `<div style="padding:12px 16px">
+        <button class="btn btn-primary" data-a="calc-s2">Перейти к шагу 2 →</button>
+      </div>` : ''}
+      <div style="height:16px"></div>`;
+  }
+
+  // Шаг 2
+  const r1 = S.res1;
+  const r2 = S.res2;
+
+  const step1box = r1 ? `
+    <div class="step1-box">
+      <div class="s1b-text">
+        Ø гильзы: <b>${r1.D_gost}\u00a0мм</b> · давление: <b>${S.cP}\u00a0МПа</b>
+      </div>
+      <button class="s1b-btn" data-a="calc-s1">Изменить</button>
+    </div>` : '';
+
+  const resultBlock2 = r2 ? `
+    <div class="s-label">Результат расчёта</div>
+    <div class="calc-result">
+      <div class="cr-header">Гидроцилиндр ${r2.article}</div>
+      <div class="param-row">
+        <span class="pr-label">Артикул</span>
+        <span class="pr-val v-article">${r2.article}</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Объём (поршн.)</span>
+        <span class="pr-val">${r2.V_p}\u00a0л</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Объём (штоков.)</span>
+        <span class="pr-val">${r2.V_s}\u00a0л</span>
+      </div>
+      ${r2.Q ? `<div class="param-row">
+        <span class="pr-label">Расход насоса</span>
+        <span class="pr-val v-accent">${r2.Q}\u00a0л/мин</span>
+      </div>` : ''}
+      ${r2.t_ret ? `<div class="param-row">
+        <span class="pr-label">Время втягивания</span>
+        <span class="pr-val">${r2.t_ret}\u00a0с</span>
+      </div>` : ''}
+      <div class="param-row">
+        <span class="pr-label">Толкающее усилие</span>
+        <span class="pr-val">${(r2.F_push / 1000).toFixed(1)}\u00a0кН</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Тянущее усилие</span>
+        <span class="pr-val">${(r2.F_pull / 1000).toFixed(1)}\u00a0кН</span>
+      </div>
+      <div class="param-row">
+        <span class="pr-label">Срок изготовления</span>
+        <span class="pr-val">Стандарт 7–10 дней</span>
+      </div>
+    </div>
+    ${!hasTG ? `<div style="padding:0 16px 12px">
+      <button class="btn btn-primary" data-a="calc-add">Добавить в заявку</button>
+    </div>` : ''}` : '';
+
+  return `
+    <div class="s-header">
+      <div class="s-title">Калькулятор</div>
+    </div>
+    ${progress}
+    ${step1box}
+    <div class="s-label">Параметры цилиндра</div>
+    <div class="section" style="margin-top:0">
+      <div class="field-wrap">
+        <div class="f-label">Диаметр гильзы (D)</div>
+        <div class="f-row">
+          <input type="number" class="f-input" id="cD"
+            placeholder="32–320" value="${S.cD || r1?.D_gost || ''}" inputmode="decimal">
+          <span class="f-unit">мм</span>
+        </div>
+      </div>
+      <div class="field-wrap">
+        <div class="f-label">Диаметр штока (d)</div>
+        <div class="f-row">
+          <input type="number" class="f-input" id="cd"
+            placeholder="20–200" value="${S.cd}" inputmode="decimal">
+          <span class="f-unit">мм</span>
+        </div>
+        <div class="f-hint">Типовое соотношение d/D ≈ 0.56–0.63</div>
+      </div>
+      <div class="field-wrap">
+        <div class="f-label">Ход штока (L)</div>
+        <div class="f-row">
+          <input type="number" class="f-input" id="cL"
+            placeholder="напр. 300" value="${S.cL}" inputmode="decimal">
+          <span class="f-unit">мм</span>
+        </div>
+        <div class="f-hint">Из чертежа механизма или ТЗ</div>
+      </div>
+      <div class="field-wrap">
+        <div class="f-label">Время выдвижения (t)</div>
+        <div class="f-row">
+          <input type="number" class="f-input" id="ct"
+            placeholder="напр. 3" value="${S.ct}" inputmode="decimal">
+          <span class="f-unit">сек</span>
+        </div>
+        <div class="f-hint">2–5 с — быстрые · 5–15 с — стандарт</div>
+      </div>
+    </div>
+    ${resultBlock2}
+    <div style="height:16px"></div>`;
+}
+
+/* ── ЗАЯВКА (КОРЗИНА) ─────────────────────────── */
+function drawCart() {
+  if (S.cart.length === 0) {
+    return `
+      <div class="s-header"><div class="s-title">Заявка</div></div>
+      <div class="empty">
+        <div class="empty-ico">📋</div>
+        <div class="empty-title">Заявка пуста</div>
+        <div class="empty-sub">Добавьте позиции из каталога<br>или через калькулятор</div>
+        <button class="btn btn-primary" style="width:auto;padding:0 32px" data-a="go-cat">
+          В каталог
+        </button>
+      </div>`;
+  }
+
+  const items = S.cart.map(p => `
+    <div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-art">${p.article}</div>
+        <div class="ci-par">Ø${p.D} / Ø${p.d} · ${p.L}\u00a0мм · ${p.P}\u00a0МПа${p.fromCalc ? ' · из расчёта' : ''}</div>
+      </div>
+      <button class="ci-del" data-a="del" data-art="${p.article}">✕</button>
+    </div>`).join('');
+
+  return `
+    <div class="s-header">
+      <div class="s-title">Заявка (${S.cart.length})</div>
+    </div>
+
+    <div class="s-label">Позиции</div>
+    <div class="section" style="margin-top:0">${items}</div>
+
+    <div class="comment-box">
+      <div class="cb-label">Комментарий (необязательно)</div>
+      <textarea class="cb-input" id="cart-comment"
+        placeholder="Нестандартные требования, материал, покрытие…&#10;Чертёж пришлю отдельным сообщением в чат"></textarea>
+    </div>
+
+    <div class="info-row">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12,6 12,12 16,14"/>
+      </svg>
+      <span>Менеджер ответит: Пн–Пт 8:30–17:00. В выходные — в понедельник.</span>
+    </div>
+
+    <div class="info-row">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+      <span>Подписываем NDA до обсуждения чертежей</span>
+    </div>
+
+    ${!hasTG ? `<div style="padding:12px 16px">
+      <button class="btn btn-primary" data-a="send-order">Отправить менеджеру</button>
+    </div>` : ''}`;
+}
+
+/* =====================================================
+   ПРИВЯЗКА ОБРАБОТЧИКОВ ДЛЯ КАЖДОГО ЭКРАНА
+===================================================== */
+function bindEvents(id, el) {
+  if (id === 'search') {
+    const inp = el.querySelector('#search-inp');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('input', () => {
+        S.searchQ = inp.value;
+        const screen = document.getElementById('s-search');
+        if (!screen) return;
+        const sc = screen.scrollTop;
+        screen.innerHTML = drawSearch(inp.value);
+        bindEvents('search', screen);
+        const ni = screen.querySelector('#search-inp');
+        if (ni) { ni.focus(); ni.setSelectionRange(inp.value.length, inp.value.length); }
+        screen.scrollTop = sc;
+      });
+    }
+  }
+
+  if (id === 'calc') {
+    // Живой пересчёт при вводе
+    ['cf','cp','cD','cd','cL','ct'].forEach(fid => {
+      const inp = el.querySelector('#' + fid);
+      if (inp) inp.addEventListener('input', calcLive);
+    });
+  }
+}
+
+/* =====================================================
+   ЕДИНЫЙ ОБРАБОТЧИК КЛИКОВ (event delegation)
+===================================================== */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]');
+  if (!el) return;
+  const a = el.dataset.a;
+
+  switch (a) {
+
+    case 'go-search':
+      S.searchQ = '';
+      go('search');
+      break;
+
+    case 'cat':
+      S.catFilter = { D: +el.dataset.d, Dmax: +el.dataset.dm, P: null };
+      go('catalog');
+      break;
+
+    case 'go-calc':
+    case 'go-calc2':
+      go('calc');
+      break;
+
+    case 'go-cart':
+      go('cart');
+      break;
+
+    case 'go-cat':
+      S.catFilter = { D: null, Dmax: null, P: null };
+      go('catalog');
+      break;
+
+    case 'prod': {
+      const art = el.dataset.art;
+      const p = PRODUCTS.find(x => x.article === art) || S.cart.find(x => x.article === art);
+      if (p) {
+        S.product = p;
+        addRecent(p);
+        go('product');
+      }
+      break;
+    }
+
+    case 'add-cart': {
+      const p = S.product;
+      if (!p) break;
+      if (cartAdd(p)) {
+        if (hasTG) tg.HapticFeedback?.notificationOccurred('success');
+        draw('product');
+        setMainBtn('product');
+      }
+      break;
+    }
+
+    case 'del': {
+      cartRemove(el.dataset.art);
+      if (hasTG) tg.HapticFeedback?.impactOccurred('light');
+      draw('cart');
+      setMainBtn('cart');
+      break;
+    }
+
+    case 'send-order':
+      sendOrder();
+      break;
+
+    case 'go-mgr':
+      if (hasTG) tg.openTelegramLink('https://t.me/pgidravlikabot');
+      else window.open('https://t.me/pgidravlikabot', '_blank');
+      break;
+
+    case 'share': {
+      const p = S.product;
+      if (!p) break;
+      const txt = `${p.article}\nØ${p.D}/${p.d}, ход ${p.L} мм, ${p.P} МПа\n${p.price_from ? 'от ' + rub(p.price_from) : ''}\nПромгидравлика: p-gidravlika.ru`;
+      if (hasTG) {
+        try { tg.openTelegramLink(`https://t.me/share/url?url=https://p-gidravlika.ru&text=${encodeURIComponent(txt)}`); }
+        catch(e) {}
+      } else if (navigator.share) {
+        navigator.share({ text: txt }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(txt).catch(() => {});
+      }
+      break;
+    }
+
+    case 'flt-p': {
+      const v = el.dataset.val;
+      S.catFilter.P = v ? +v : null;
+      draw('catalog');
+      break;
+    }
+
+    case 'srch-clr':
+      S.searchQ = '';
+      go('search');
+      break;
+
+    case 'cu-N':
+      S.calcUnit = 'N';
+      draw('calc');
+      break;
+
+    case 'cu-kg':
+      S.calcUnit = 'kg';
+      draw('calc');
+      break;
+
+    case 'calc-s2':
+      calcGoStep2();
+      break;
+
+    case 'calc-s1':
+      S.calcStep = 1;
+      draw('calc');
+      if (hasTG) updateCalcBtn();
+      break;
+
+    case 'calc-add':
+      calcAddToCart();
+      break;
+  }
+});
+
+/* =====================================================
+   КАЛЬКУЛЯТОР — ЛОГИКА
+===================================================== */
+
+/** Живой пересчёт при вводе в поля */
+function calcLive() {
+  const screen = document.getElementById('s-calc');
+  if (!screen) return;
+
+  if (S.calcStep === 1) {
+    const fEl = screen.querySelector('#cf');
+    const pEl = screen.querySelector('#cp');
+    S.cF = fEl?.value || '';
+    S.cP = pEl?.value || '';
+
+    const Fraw = +S.cF;
+    const P    = +S.cP;
+    const F    = S.calcUnit === 'kg' ? Fraw * 9.81 : Fraw;
+
+    if (F > 0 && P > 0 && P <= 35) {
+      const Dmin = Math.sqrt(4 * F / (Math.PI * P * 1e6)) * 1000;
+      S.res1 = { D_min: Dmin.toFixed(1), D_gost: gostD(Dmin) };
+    } else {
+      S.res1 = null;
+    }
+    // Частичный перерендер (сохраняем фокус)
+    redrawCalcResult1(screen);
+
+  } else {
+    const dEl = screen.querySelector('#cD');
+    const dsEl = screen.querySelector('#cd');
+    const lEl  = screen.querySelector('#cL');
+    const tEl  = screen.querySelector('#ct');
+
+    S.cD = dEl?.value  || '';
+    S.cd = dsEl?.value || '';
+    S.cL = lEl?.value  || '';
+    S.ct = tEl?.value  || '';
+
+    const D = +S.cD, d = +S.cd, L = +S.cL, t = +S.ct;
+    const P = +(S.cP || 16);
+
+    if (D > 0 && d > 0 && d < D && L > 0) {
+      const c = calcCyl(D, d, L, t || 3, P);
+      S.res2 = { ...c, article: `ГЦ-${D}/${d}-${L}` };
+    } else {
+      S.res2 = null;
+    }
+
+    // Полный перерендер шага 2 для обновления результата
+    screen.innerHTML = drawCalc();
+    bindEvents('calc', screen);
+    if (hasTG) updateCalcBtn();
+  }
+}
+
+/** Перерисовать только блок результата шага 1, не трогая поля */
+function redrawCalcResult1(screen) {
+  screen.innerHTML = drawCalc();
+  bindEvents('calc', screen);
+  if (hasTG) updateCalcBtn();
+}
+
+/** Переход к шагу 2 с валидацией */
+function calcGoStep2() {
+  const screen = document.getElementById('s-calc');
+  const fEl = screen?.querySelector('#cf');
+  const pEl = screen?.querySelector('#cp');
+
+  S.cF = fEl?.value || S.cF;
+  S.cP = pEl?.value || S.cP;
+
+  const Fraw = +S.cF;
+  const P    = +S.cP;
+
+  if (!Fraw || Fraw <= 0) {
+    markFieldErr(screen, '#cf', 'Введите усилие');
+    return;
+  }
+  if (!P || P <= 0 || P > 35) {
+    markFieldErr(screen, '#cp', 'Введите давление (1–35 МПа)');
+    return;
+  }
+
+  const F    = S.calcUnit === 'kg' ? Fraw * 9.81 : Fraw;
+  const Dmin = Math.sqrt(4 * F / (Math.PI * P * 1e6)) * 1000;
+
+  S.res1     = { D_min: Dmin.toFixed(1), D_gost: gostD(Dmin) };
+  S.cD       = String(gostD(Dmin));
+  S.calcStep = 2;
+
+  if (screen) {
+    screen.innerHTML = drawCalc();
+    bindEvents('calc', screen);
+  }
+  if (hasTG) updateCalcBtn();
+}
+
+/** Добавить результат калькулятора в заявку */
+function calcAddToCart() {
+  if (!S.res2) return;
+  const p = {
+    article: S.res2.article,
+    D: +S.cD,
+    d: +S.cd,
+    L: +S.cL,
+    P: +(S.cP || 16),
+    price_from: null,
+    stock: 'custom',
+    lead_time: '7–10 дней',
+    fromCalc: true,
+  };
+  cartAdd(p);
+  if (hasTG) tg.HapticFeedback?.notificationOccurred('success');
+  go('cart');
+}
+
+/** Подсветить поле с ошибкой */
+function markFieldErr(container, sel, msg) {
+  const inp = container?.querySelector(sel);
+  if (!inp) return;
+  inp.classList.add('err');
+  const wrap = inp.closest('.field-wrap');
+  let errEl = wrap?.querySelector('.f-err');
+  if (!errEl) {
+    errEl = document.createElement('div');
+    errEl.className = 'f-err';
+    wrap?.appendChild(errEl);
+  }
+  errEl.textContent = msg;
+  inp.addEventListener('input', () => {
+    inp.classList.remove('err');
+    errEl.remove();
+  }, { once: true });
+}
+
+/* =====================================================
+   ЗАПУСК
+===================================================== */
+function init() {
+  // Главный экран — стартовая точка
+  S.stack = ['home'];
+  draw('home');
+
+  const home = document.getElementById('s-home');
+  if (home) {
+    home.style.transform = 'translateX(0)';
+    home.classList.add('active');
+  }
+
+  if (hasTG) {
+    tg.MainButton.hide();
+    tg.BackButton.hide();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
