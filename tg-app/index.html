@@ -725,6 +725,105 @@
     ===================================================== */
     .gap16 { padding: 0 16px; }
     .mb12  { margin-bottom: 12px; }
+
+    /* =====================================================
+       ОФФЕР-МОДАЛКА (показывается один раз при первом открытии)
+    ===================================================== */
+    .offer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .offer-overlay.visible { opacity: 1; }
+
+    .offer-card {
+      background: var(--section);
+      border-radius: 20px;
+      padding: 32px 24px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      transform: translateY(24px) scale(0.96);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .offer-overlay.visible .offer-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .offer-emoji { font-size: 52px; line-height: 1; margin-bottom: 16px; }
+
+    .offer-title {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .offer-sub {
+      font-size: 14px;
+      color: var(--hint);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .offer-bullets {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .offer-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .offer-bullets li::before {
+      content: '•';
+      color: var(--accent);
+      font-size: 18px;
+      line-height: 1.1;
+      flex-shrink: 0;
+    }
+
+    .offer-btn {
+      display: block;
+      width: 100%;
+      min-height: 52px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: opacity 0.15s;
+    }
+    .offer-btn:active { opacity: 0.85; }
+
+    .offer-skip {
+      background: none;
+      border: none;
+      color: var(--hint);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px;
+      width: 100%;
+    }
+    .offer-skip:active { opacity: 0.6; }
   </style>
 </head>
 <body>
@@ -737,6 +836,22 @@
   <div class="screen" id="s-product"></div>
   <div class="screen" id="s-calc"></div>
   <div class="screen" id="s-cart"></div>
+
+  <!-- Оффер — показывается один раз при первом открытии -->
+  <div class="offer-overlay" id="offer-overlay">
+    <div class="offer-card">
+      <div class="offer-emoji">🎁</div>
+      <div class="offer-title">Подберите гидроцилиндр за&nbsp;1&nbsp;минуту</div>
+      <div class="offer-sub">Подпишитесь на бота&nbsp;— получите промокод в&nbsp;личное сообщение</div>
+      <ul class="offer-bullets">
+        <li>Подбор гидроцилиндра за 1 минуту</li>
+        <li>Поиск аналога или замены</li>
+        <li>Помощь инженера при необходимости</li>
+      </ul>
+      <button class="offer-btn" id="offer-btn-subscribe">Получить скидку 15%</button>
+      <button class="offer-skip" id="offer-btn-skip">Пропустить</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -2073,6 +2188,40 @@ function markFieldErr(container, sel, msg) {
 }
 
 /* =====================================================
+   ОФФЕР — показать один раз при первом открытии
+===================================================== */
+function showOfferIfNeeded() {
+  try {
+    if (localStorage.getItem('offer_shown_v1')) return;
+  } catch(e) { return; }
+
+  const overlay = document.getElementById('offer-overlay');
+  if (!overlay) return;
+
+  // Плавное появление (requestAnimationFrame нужен чтобы transition сработал)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+  });
+
+  function closeOffer() {
+    overlay.classList.remove('visible');
+    overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+    try { localStorage.setItem('offer_shown_v1', '1'); } catch(e) {}
+  }
+
+  document.getElementById('offer-btn-subscribe').addEventListener('click', () => {
+    if (hasTG) tg.openTelegramLink('https://t.me/PromGidravlika_bot/app');
+    else window.open('https://t.me/PromGidravlika_bot/app', '_blank');
+    closeOffer();
+  });
+
+  document.getElementById('offer-btn-skip').addEventListener('click', closeOffer);
+
+  // Клик по фону закрывает
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeOffer(); });
+}
+
+/* =====================================================
    ЗАПУСК
 ===================================================== */
 function init() {
@@ -2090,6 +2239,9 @@ function init() {
     tg.MainButton.hide();
     tg.BackButton.hide();
   }
+
+  // Показать оффер при первом открытии
+  showOfferIfNeeded();
 }
 
 init();
