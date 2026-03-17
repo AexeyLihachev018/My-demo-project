@@ -727,6 +727,80 @@
     .mb12  { margin-bottom: 12px; }
 
     /* =====================================================
+       ОНБОРДИНГ (первый запуск)
+    ===================================================== */
+    .onboard-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: 40px 24px 32px;
+      text-align: center;
+    }
+    .ob-logo {
+      font-size: 56px;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .ob-greeting {
+      font-size: 13px;
+      color: var(--hint);
+      margin-bottom: 6px;
+    }
+    .ob-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+    .ob-sub {
+      font-size: 15px;
+      color: var(--hint);
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+    .ob-points {
+      list-style: none;
+      width: 100%;
+      max-width: 320px;
+      text-align: left;
+      margin-bottom: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ob-points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .ob-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+    .ob-btn {
+      width: 100%;
+      max-width: 320px;
+      min-height: 52px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .ob-btn:active { opacity: 0.85; }
+
+    /* =====================================================
        ОФФЕР-МОДАЛКА (показывается один раз при первом открытии)
     ===================================================== */
     .offer-overlay {
@@ -830,6 +904,7 @@
 
 <div id="app">
   <!-- Экраны рендерятся динамически через JS -->
+  <div class="screen" id="s-onboard"></div>
   <div class="screen" id="s-home"></div>
   <div class="screen" id="s-search"></div>
   <div class="screen" id="s-catalog"></div>
@@ -1326,6 +1401,7 @@ function draw(id) {
   if (!el) return;
 
   switch (id) {
+    case 'onboard': el.innerHTML = drawOnboard(); break;
     case 'home':    el.innerHTML = drawHome();    break;
     case 'search':  el.innerHTML = drawSearch(S.searchQ || ''); break;
     case 'catalog': el.innerHTML = drawCatalog(); break;
@@ -1338,6 +1414,36 @@ function draw(id) {
 }
 
 /* ── ГЛАВНЫЙ ЭКРАН ─────────────────────────────── */
+/* ── ОНБОРДИНГ ──────────────────────────────────── */
+function drawOnboard() {
+  const user = hasTG ? tg.initDataUnsafe?.user : null;
+  const name = user?.first_name ? user.first_name : '';
+  const greeting = name ? `Привет, ${name}!` : 'Привет!';
+
+  return `
+    <div class="onboard-wrap">
+      <div class="ob-logo">⚙️</div>
+      <div class="ob-greeting">${greeting}</div>
+      <div class="ob-title">Каталог гидроцилиндров Промгидравлика</div>
+      <div class="ob-sub">Всё что нужно для подбора —<br>прямо здесь, без звонков</div>
+      <ul class="ob-points">
+        <li>
+          <span class="ob-icon">🔍</span>
+          <span>Ищите по диаметру, ходу или артикулу</span>
+        </li>
+        <li>
+          <span class="ob-icon">🧮</span>
+          <span>Рассчитайте нужный цилиндр по усилию и давлению</span>
+        </li>
+        <li>
+          <span class="ob-icon">📋</span>
+          <span>Отправьте заявку менеджеру прямо из приложения</span>
+        </li>
+      </ul>
+      <button class="ob-btn" data-a="onboard-start">Начать</button>
+    </div>`;
+}
+
 function drawHome() {
   const cats = CATS.map(c => `
     <div class="cat-item" data-a="cat" data-d="${c.D}" data-dm="${c.Dmax}">
@@ -1413,7 +1519,23 @@ function drawHome() {
     ${cartRow}
     ${recentHtml}
 
-    <div style="padding:20px 16px;text-align:center">
+    <div style="padding:12px 16px 4px">
+      <button data-a="share-bot" style="
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        width:100%;min-height:46px;
+        background:var(--section);border:1.5px solid var(--sep);
+        border-radius:12px;color:var(--accent);font-size:15px;font-weight:600;
+        cursor:pointer;transition:background 0.1s">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+          <polyline points="16,6 12,2 8,6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        Поделиться с другом
+      </button>
+    </div>
+
+    <div style="padding:16px 16px 20px;text-align:center">
       <div style="font-size:13px;color:var(--hint)">Промгидравлика · p-gidravlika.ru</div>
       <div style="font-size:12px;color:var(--hint);margin-top:4px">+7 (3412) 77-57-04 · Пн–Пт 8:30–17:00</div>
     </div>`;
@@ -1935,6 +2057,34 @@ document.addEventListener('click', e => {
       goBack();
       break;
 
+    case 'onboard-start':
+      try { localStorage.setItem('onboard_v1', '1'); } catch(e) {}
+      S.stack = ['home'];
+      draw('home');
+      { const h = document.getElementById('s-home');
+        const o = document.getElementById('s-onboard');
+        if (h) { h.style.transform='translateX(0)'; h.classList.add('active'); }
+        if (o) { o.classList.remove('active'); o.style.transform='translateX(-100%)'; }
+      }
+      if (hasTG) { tg.MainButton.hide(); tg.BackButton.hide(); }
+      showOfferIfNeeded();
+      break;
+
+    case 'share-bot': {
+      const shareText = 'Каталог гидроцилиндров Промгидравлика — подбор, расчёт и заявка прямо в Telegram:';
+      const shareUrl  = 'https://t.me/PromGidravlika_Bot';
+      if (hasTG) {
+        try { tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`); }
+        catch(e) {}
+      } else if (navigator.share) {
+        navigator.share({ title: 'Промгидравлика', text: shareText, url: shareUrl }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(shareUrl);
+        alert('Ссылка скопирована: ' + shareUrl);
+      }
+      break;
+    }
+
     case 'go-search':
       S.searchQ = '';
       go('search');
@@ -2225,23 +2375,25 @@ function showOfferIfNeeded() {
    ЗАПУСК
 ===================================================== */
 function init() {
-  // Главный экран — стартовая точка
-  S.stack = ['home'];
-  draw('home');
+  let seenOnboard = false;
+  try { seenOnboard = !!localStorage.getItem('onboard_v1'); } catch(e) {}
 
-  const home = document.getElementById('s-home');
-  if (home) {
-    home.style.transform = 'translateX(0)';
-    home.classList.add('active');
+  if (!seenOnboard) {
+    // Первый запуск — показываем онбординг
+    S.stack = ['onboard'];
+    draw('onboard');
+    const ob = document.getElementById('s-onboard');
+    if (ob) { ob.style.transform = 'translateX(0)'; ob.classList.add('active'); }
+    if (hasTG) { tg.MainButton.hide(); tg.BackButton.hide(); }
+  } else {
+    // Повторный запуск — сразу на главный
+    S.stack = ['home'];
+    draw('home');
+    const home = document.getElementById('s-home');
+    if (home) { home.style.transform = 'translateX(0)'; home.classList.add('active'); }
+    if (hasTG) { tg.MainButton.hide(); tg.BackButton.hide(); }
+    showOfferIfNeeded();
   }
-
-  if (hasTG) {
-    tg.MainButton.hide();
-    tg.BackButton.hide();
-  }
-
-  // Показать оффер при первом открытии
-  showOfferIfNeeded();
 }
 
 init();
