@@ -42,19 +42,17 @@ export default async function handler(req, res) {
     if (text.startsWith('/start')) {
       const firstName = msg.from?.first_name || '';
       const greeting  = firstName ? `Привет, ${firstName}!` : 'Привет!';
-      const tgResp = await sendMessage(BOT_TOKEN, chatId,
-        `${greeting}\n\nЭто каталог гидроцилиндров Промгидравлика.\n\nЗдесь можно:\n- Найти цилиндр по диаметру или артикулу\n- Рассчитать нужный размер по усилию и давлению\n- Отправить заявку менеджеру прямо из чата\n\nНажмите кнопку ниже:`,
-        {
-          reply_markup: {
-            inline_keyboard: [[
-              { text: 'Открыть каталог', web_app: { url: APP_URL } }
-            ]]
-          }
-        }
-      );
-      const tgResult = await tgResp.json().catch(() => ({}));
-      console.log('sendMessage result:', JSON.stringify(tgResult));
-      return res.status(200).json({ ok: true, tg: tgResult.ok, desc: tgResult.description });
+      const tgRaw = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `${greeting}\n\nЭто каталог гидроцилиндров Промгидравлика.\n\nЗдесь можно:\n- Найти цилиндр по диаметру\n- Рассчитать по усилию и давлению\n- Отправить заявку менеджеру`
+        })
+      });
+      const tgResult = await tgRaw.json();
+      console.log('START result:', JSON.stringify(tgResult));
+      return res.status(200).json({ ok: true, tg_ok: tgResult.ok, err: tgResult.description });
     }
 
     // ── Команда /help ─────────────────────────────────
