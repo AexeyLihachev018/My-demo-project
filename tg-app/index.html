@@ -1729,7 +1729,36 @@ function drawHome() {
     ${cartRow}
     ${recentHtml}
 
-    <div style="padding:12px 16px 4px">
+    <div style="padding:12px 16px 4px;display:flex;gap:10px">
+      <button data-a="call" style="
+        flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        min-height:70px;background:var(--section);border:none;
+        border-radius:14px;color:var(--text);font-size:13px;font-weight:600;
+        cursor:pointer;transition:background 0.1s">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(52,199,89,0.15);
+          display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" fill="none" stroke="#34c759" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.1 1.18 2 2 0 012.11 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </div>
+        Позвонить
+      </button>
+      <button data-a="go-mgr" style="
+        flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        min-height:70px;background:var(--section);border:none;
+        border-radius:14px;color:var(--text);font-size:13px;font-weight:600;
+        cursor:pointer;transition:background 0.1s">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,171,238,0.15);
+          display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" fill="none" stroke="#2aabee" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        Написать
+      </button>
+    </div>
+
+    <div style="padding:8px 16px 4px">
       <button data-a="share-bot" style="
         display:flex;align-items:center;justify-content:center;gap:8px;
         width:100%;min-height:46px;
@@ -2367,6 +2396,10 @@ document.addEventListener('click', e => {
 
     case 'send-order':
       sendOrder();
+      break;
+
+    case 'call':
+      window.open('tel:+73412775704');
       break;
 
     case 'go-mgr':
