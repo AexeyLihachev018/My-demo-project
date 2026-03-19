@@ -1,45 +1,74 @@
 // =====================================================
-// api/webhook.js — Vercel Serverless Function
+// api/webhook.js — Универсальный webhook для ботов МАСТЕРОВ
 //
-// Переменные окружения (Vercel → Settings → Environment Variables):
-//   BOT_TOKEN       — токен бота от @BotFather
-//   MANAGER_CHAT_ID — chat_id менеджера (узнать через @userinfobot)
+// Telegram шлёт сюда сообщения клиентов мастера.
+// URL задаётся при онбординге: /api/webhook?master_id=uuid
+//
+// Логика:
+//   1. Читаем master_id из URL
+//   2. Загружаем мастера из базы → получаем его bot_token, slug, brand_name
+//   3. Отвечаем от имени БОТА МАСТЕРА
 // =====================================================
 
-const APP_URL = 'https://my-demo-project-nt8u.vercel.app/';
+import { supabase } from '../lib/supabase.js';
+
+const APP_URL = process.env.APP_URL || 'https://my-demo-project-nt8u.vercel.app';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const BOT_TOKEN    = process.env.BOT_TOKEN;
-  const MANAGER_CHAT = process.env.MANAGER_CHAT_ID;
-
-  if (!BOT_TOKEN) {
-    console.error('BOT_TOKEN не задан');
-    return res.status(200).json({ ok: false, error: 'no token' });
+  // master_id передаётся в URL: /api/webhook?master_id=uuid
+  const { master_id } = req.query;
+  if (!master_id) {
+    return res.status(200).json({ ok: true });
   }
 
   try {
+    // 1. Загружаем мастера из базы данных
+    const { data: master, error } = await supabase
+      .from('masters')
+      .select('id, slug, brand_name, description, bot_token, is_active')
+      .eq('id', master_id)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !master) {
+      console.error('Мастер не найден:', master_id);
+      return res.status(200).json({ ok: true });
+    }
+
+    const token = master.bot_token; // TODO: расшифровать AES-256-GCM
+    const appUrl = `${APP_URL}/m/${master.slug}`;
+
+    // 2. Разбираем входящее сообщение от Telegram
     const update = req.body;
-    const msg    = update?.message;
+    const msg = update?.message;
+
     if (!msg) return res.status(200).json({ ok: true });
 
-    const chatId  = msg.chat?.id;
-    const text    = msg.text || '';
-    const webData = msg.web_app_data?.data;
+    const chatId = msg.chat?.id;
+    const text = msg.text || '';
 
-    // ── Команда /start ────────────────────────────────
+    if (!chatId) return res.status(200).json({ ok: true });
+
+    // 3. Реагируем на команды
+
+    // /start — приветствие + кнопка открыть каталог мастера
     if (text.startsWith('/start')) {
       const firstName = msg.from?.first_name || '';
-      const greeting  = firstName ? `Привет, ${firstName}!` : 'Привет!';
-      await sendMessage(BOT_TOKEN, chatId,
-        `${greeting}\n\nЭто каталог гидроцилиндров *Промгидравлика*.\n\nЗдесь можно:\n📦 Найти цилиндр по диаметру\n🧮 Рассчитать по усилию и давлению\n📋 Отправить заявку менеджеру`,
+      const greeting = firstName ? `Привет, ${firstName}! 👋` : 'Привет! 👋';
+
+      await sendMessage(token, chatId,
+        `${greeting}\n\n` +
+        `Вы в *${master.brand_name}*.\n\n` +
+        (master.description ? `${master.description}\n\n` : '') +
+        `Нажмите кнопку чтобы посмотреть услуги и записаться 👇`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+              { text: '📅 Записаться', web_app: { url: appUrl } }
             ]]
           }
         }
@@ -47,71 +76,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // ── Команда /help ─────────────────────────────────
-    if (text.startsWith('/help')) {
-      await sendMessage(BOT_TOKEN, chatId,
-        `*Помощь — Промгидравлика*\n\n` +
-        `📦 *Каталог* — гидроцилиндры Ø32–Ø200 мм\n` +
-        `🧮 *Калькулятор* — подбор по усилию и давлению\n` +
-        `📋 *Заявка* — отправить список позиций менеджеру\n\n` +
-        `*Контакты:*\n` +
-        `📞 +7 (3412) 77-57-04\n` +
-        `🌐 p-gidravlika.ru\n` +
-        `🕐 Пн–Пт 8:30–17:00`,
-        {
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
-            ]]
-          }
-        }
-      );
-      return res.status(200).json({ ok: true });
-    }
-
-    // ── Команда /catalog ──────────────────────────────
-    if (text.startsWith('/catalog') || text.startsWith('/calc')) {
-      await sendMessage(BOT_TOKEN, chatId,
-        `Открываю каталог 👇`,
-        {
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
-            ]]
-          }
-        }
-      );
-      return res.status(200).json({ ok: true });
-    }
-
-    // ── Данные из Mini App (заявка) ───────────────────
-    if (webData) {
-      let payload;
-      try { payload = JSON.parse(webData); }
-      catch (e) { return res.status(200).json({ ok: true }); }
-
-      // Отправить менеджеру (если задан MANAGER_CHAT_ID)
-      if (MANAGER_CHAT) {
-        const orderText = formatOrder(payload, msg);
-        await sendMessage(BOT_TOKEN, MANAGER_CHAT, orderText);
-      }
-
-      // Подтвердить пользователю
-      await sendMessage(BOT_TOKEN, chatId,
-        `✅ *Заявка принята!*\n\n` +
-        `Наш инженер свяжется с вами в рабочее время: Пн–Пт 8:30–17:00.\n\n` +
-        `Если отправили в выходной — ответим в понедельник.`
-      );
-      return res.status(200).json({ ok: true });
-    }
-
-    // ── Любое другое сообщение ────────────────────────
-    await sendMessage(BOT_TOKEN, chatId,
-      `Используйте кнопку ниже для работы с каталогом 👇`,
+    // Любое другое сообщение — напомнить про кнопку
+    await sendMessage(token, chatId,
+      `Чтобы посмотреть услуги и записаться — нажмите кнопку 👇`,
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+            { text: '📅 Записаться', web_app: { url: appUrl } }
           ]]
         }
       }
@@ -119,46 +90,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
 
   } catch (err) {
-    console.error('Ошибка webhook:', err);
+    console.error('webhook error:', err);
     return res.status(200).json({ ok: true });
   }
-}
-
-// ─────────────────────────────────────────────────────
-// Форматирование заявки для менеджера
-// ─────────────────────────────────────────────────────
-function formatOrder(payload, tgMessage) {
-  const { items = [], comment, user } = payload;
-  const tgUser   = tgMessage?.from;
-  const name     = user?.name || [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || 'Неизвестно';
-  const username = user?.username || tgUser?.username;
-  const contact  = username ? `@${username}` : `tg_id: ${tgUser?.id || '—'}`;
-
-  const itemLines = items.map((p, i) =>
-    `  ${i + 1}. *${p.article}*\n     Ø${p.D}/${p.d} мм · ход ${p.L} мм · ${p.P} МПа${p.fromCalc ? ' _(расчёт)_' : ''}`
-  ).join('\n');
-
-  const commentLine = comment ? `\n💬 *Комментарий:*\n${comment}` : '';
-
-  const now = new Date().toLocaleString('ru-RU', {
-    timeZone: 'Asia/Yekaterinburg',
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-
-  return [
-    `📋 *Новая заявка из каталога TMA*`,
-    ``,
-    `👤 *Клиент:* ${name} (${contact})`,
-    ``,
-    `🔩 *Позиции (${items.length}):*`,
-    itemLines,
-    commentLine,
-    ``,
-    `🕐 ${now} (Екб)`,
-    ``,
-    `_Ответьте на это сообщение или напишите клиенту напрямую_`,
-  ].join('\n');
 }
 
 // ─────────────────────────────────────────────────────
@@ -166,10 +100,10 @@ function formatOrder(payload, tgMessage) {
 // ─────────────────────────────────────────────────────
 async function sendMessage(token, chatId, text, extra = {}) {
   const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', ...extra }),
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', ...extra }),
   });
-  if (!resp.ok) console.error('Telegram API error:', await resp.text());
+  if (!resp.ok) console.error('Telegram sendMessage error:', await resp.text());
   return resp;
 }
