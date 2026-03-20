@@ -12,7 +12,7 @@
 
 import { supabase } from '../lib/supabase.js';
 
-const APP_URL = 'https://my-demo-project-nt8u.vercel.app';
+const APP_URL = process.env.APP_URL || 'https://my-demo-project-nt8u.vercel.app';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

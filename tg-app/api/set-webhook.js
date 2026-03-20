@@ -20,8 +20,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'BOT_TOKEN not set' });
   }
 
-  // URL нашего webhook (этот же домен, другой endpoint)
-  const webhookUrl = `https://my-demo-project-nt8u.vercel.app/api/webhook`;
+  // URL нашего webhook (берётся из переменной окружения APP_URL)
+  const appUrl = process.env.APP_URL || 'https://my-demo-project-nt8u.vercel.app';
+  const webhookUrl = `${appUrl}/api/webhook`;
 
   const resp = await fetch(
     `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`,
