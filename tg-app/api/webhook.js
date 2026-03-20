@@ -1,32 +1,147 @@
 // =====================================================
-// api/webhook.js — Универсальный webhook для ботов МАСТЕРОВ
+// api/webhook.js — два режима работы:
 //
-// Telegram шлёт сюда сообщения клиентов мастера.
-// URL задаётся при онбординге: /api/webhook?master_id=uuid
+// 1. БЕЗ master_id → Каталог Промгидравлика (старый режим)
+//    URL: /api/webhook
+//    Бот: @PromGidravlika_bot (BOT_TOKEN)
 //
-// Логика:
-//   1. Читаем master_id из URL
-//   2. Загружаем мастера из базы → получаем его bot_token, slug, brand_name
-//   3. Отвечаем от имени БОТА МАСТЕРА
+// 2. С master_id → Бот конкретного мастера (новый режим)
+//    URL: /api/webhook?master_id=uuid
+//    Бот: бот мастера (bot_token из БД)
 // =====================================================
 
 import { supabase } from '../lib/supabase.js';
 
-const APP_URL = process.env.APP_URL || 'https://my-demo-project-nt8u.vercel.app';
+const APP_URL = 'https://my-demo-project-nt8u.vercel.app';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // master_id передаётся в URL: /api/webhook?master_id=uuid
   const { master_id } = req.query;
-  if (!master_id) {
-    return res.status(200).json({ ok: true });
+
+  // ── Режим 2: Бот мастера (если есть master_id в URL) ──────────
+  if (master_id) {
+    return handleMasterBot(req, res, master_id);
+  }
+
+  // ── Режим 1: Каталог Промгидравлика ───────────────────────────
+  return handleCatalog(req, res);
+}
+
+// =====================================================
+// РЕЖИМ 1: Каталог гидроцилиндров Промгидравлика
+// =====================================================
+async function handleCatalog(req, res) {
+  const BOT_TOKEN    = process.env.BOT_TOKEN;
+  const MANAGER_CHAT = process.env.MANAGER_CHAT_ID;
+
+  if (!BOT_TOKEN) {
+    console.error('BOT_TOKEN не задан');
+    return res.status(200).json({ ok: false, error: 'no token' });
   }
 
   try {
-    // 1. Загружаем мастера из базы данных
+    const update = req.body;
+    const msg    = update?.message;
+    if (!msg) return res.status(200).json({ ok: true });
+
+    const chatId  = msg.chat?.id;
+    const text    = msg.text || '';
+    const webData = msg.web_app_data?.data;
+
+    // ── /start ────────────────────────────────────────
+    if (text.startsWith('/start')) {
+      const firstName = msg.from?.first_name || '';
+      const greeting  = firstName ? `Привет, ${firstName}!` : 'Привет!';
+      await sendMessage(BOT_TOKEN, chatId,
+        `${greeting}\n\nЭто каталог гидроцилиндров *Промгидравлика*.\n\nЗдесь можно:\n📦 Найти цилиндр по диаметру\n🧮 Рассчитать по усилию и давлению\n📋 Отправить заявку менеджеру`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+            ]]
+          }
+        }
+      );
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── /help ─────────────────────────────────────────
+    if (text.startsWith('/help')) {
+      await sendMessage(BOT_TOKEN, chatId,
+        `*Помощь — Промгидравлика*\n\n` +
+        `📦 *Каталог* — гидроцилиндры Ø32–Ø200 мм\n` +
+        `🧮 *Калькулятор* — подбор по усилию и давлению\n` +
+        `📋 *Заявка* — отправить список позиций менеджеру\n\n` +
+        `*Контакты:*\n` +
+        `📞 +7 (3412) 77-57-04\n` +
+        `🌐 p-gidravlika.ru\n` +
+        `🕐 Пн–Пт 8:30–17:00`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+            ]]
+          }
+        }
+      );
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── /catalog, /calc ───────────────────────────────
+    if (text.startsWith('/catalog') || text.startsWith('/calc')) {
+      await sendMessage(BOT_TOKEN, chatId, `Открываю каталог 👇`, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+          ]]
+        }
+      });
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Данные из Mini App (заявка) ───────────────────
+    if (webData) {
+      let payload;
+      try { payload = JSON.parse(webData); }
+      catch (e) { return res.status(200).json({ ok: true }); }
+
+      if (MANAGER_CHAT) {
+        const orderText = formatOrder(payload, msg);
+        await sendMessage(BOT_TOKEN, MANAGER_CHAT, orderText);
+      }
+
+      await sendMessage(BOT_TOKEN, chatId,
+        `✅ *Заявка принята!*\n\n` +
+        `Наш инженер свяжется с вами в рабочее время: Пн–Пт 8:30–17:00.\n\n` +
+        `Если отправили в выходной — ответим в понедельник.`
+      );
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Любое другое сообщение ────────────────────────
+    await sendMessage(BOT_TOKEN, chatId, `Используйте кнопку ниже для работы с каталогом 👇`, {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '📦 Открыть каталог', web_app: { url: APP_URL } }
+        ]]
+      }
+    });
+    return res.status(200).json({ ok: true });
+
+  } catch (err) {
+    console.error('Ошибка webhook (catalog):', err);
+    return res.status(200).json({ ok: true });
+  }
+}
+
+// =====================================================
+// РЕЖИМ 2: Бот мастера — показывает его каталог услуг
+// =====================================================
+async function handleMasterBot(req, res, master_id) {
+  try {
     const { data: master, error } = await supabase
       .from('masters')
       .select('id, slug, brand_name, description, bot_token, is_active')
@@ -39,26 +154,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    const token = master.bot_token; // TODO: расшифровать AES-256-GCM
+    const token  = master.bot_token;
     const appUrl = `${APP_URL}/m/${master.slug}`;
-
-    // 2. Разбираем входящее сообщение от Telegram
     const update = req.body;
-    const msg = update?.message;
+    const msg    = update?.message;
 
     if (!msg) return res.status(200).json({ ok: true });
 
     const chatId = msg.chat?.id;
-    const text = msg.text || '';
+    const text   = msg.text || '';
 
     if (!chatId) return res.status(200).json({ ok: true });
 
-    // 3. Реагируем на команды
-
-    // /start — приветствие + кнопка открыть каталог мастера
     if (text.startsWith('/start')) {
       const firstName = msg.from?.first_name || '';
-      const greeting = firstName ? `Привет, ${firstName}! 👋` : 'Привет! 👋';
+      const greeting  = firstName ? `Привет, ${firstName}! 👋` : 'Привет! 👋';
 
       await sendMessage(token, chatId,
         `${greeting}\n\n` +
@@ -76,23 +186,56 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // Любое другое сообщение — напомнить про кнопку
-    await sendMessage(token, chatId,
-      `Чтобы посмотреть услуги и записаться — нажмите кнопку 👇`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '📅 Записаться', web_app: { url: appUrl } }
-          ]]
-        }
+    await sendMessage(token, chatId, `Чтобы посмотреть услуги — нажмите кнопку 👇`, {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '📅 Записаться', web_app: { url: appUrl } }
+        ]]
       }
-    );
+    });
     return res.status(200).json({ ok: true });
 
   } catch (err) {
-    console.error('webhook error:', err);
+    console.error('webhook error (master):', err);
     return res.status(200).json({ ok: true });
   }
+}
+
+// ─────────────────────────────────────────────────────
+// Форматирование заявки для менеджера
+// ─────────────────────────────────────────────────────
+function formatOrder(payload, tgMessage) {
+  const { items = [], comment, user } = payload;
+  const tgUser   = tgMessage?.from;
+  const name     = user?.name || [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || 'Неизвестно';
+  const username = user?.username || tgUser?.username;
+  const contact  = username ? `@${username}` : `tg_id: ${tgUser?.id || '—'}`;
+
+  const itemLines = items.map((p, i) =>
+    `  ${i + 1}. *${p.article}*\n     Ø${p.D}/${p.d} мм · ход ${p.L} мм · ${p.P} МПа${p.fromCalc ? ' _(расчёт)_' : ''}`
+  ).join('\n');
+
+  const commentLine = comment ? `\n💬 *Комментарий:*\n${comment}` : '';
+
+  const now = new Date().toLocaleString('ru-RU', {
+    timeZone: 'Asia/Yekaterinburg',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  return [
+    `📋 *Новая заявка из каталога TMA*`,
+    ``,
+    `👤 *Клиент:* ${name} (${contact})`,
+    ``,
+    `🔩 *Позиции (${items.length}):*`,
+    itemLines,
+    commentLine,
+    ``,
+    `🕐 ${now} (Екб)`,
+    ``,
+    `_Ответьте на это сообщение или напишите клиенту напрямую_`,
+  ].join('\n');
 }
 
 // ─────────────────────────────────────────────────────
@@ -100,10 +243,10 @@ export default async function handler(req, res) {
 // ─────────────────────────────────────────────────────
 async function sendMessage(token, chatId, text, extra = {}) {
   const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', ...extra }),
+    body:    JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', ...extra }),
   });
-  if (!resp.ok) console.error('Telegram sendMessage error:', await resp.text());
+  if (!resp.ok) console.error('Telegram API error:', await resp.text());
   return resp;
 }
