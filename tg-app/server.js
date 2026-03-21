@@ -9,6 +9,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+import { log }              from './lib/logger.js';
 import webhookHandler        from './api/webhook.js';
 import mSlugHandler          from './api/m/[slug].js';
 import masterSlugHandler     from './api/master/[slug].js';
@@ -42,9 +43,10 @@ const keyPath  = join(__dirname, 'ssl/server.key');
 const certPath = join(__dirname, 'ssl/server.crt');
 
 if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-  console.error('❌ SSL сертификаты не найдены.');
-  console.error('   Создай папку ssl/ и запусти:');
-  console.error('   openssl req -newkey rsa:2048 -sha256 -nodes -keyout ssl/server.key -x509 -days 3650 -out ssl/server.crt -subj "/CN=193.168.48.98"');
+  log.error('server', 'SSL сертификаты не найдены', {
+    key: keyPath, cert: certPath,
+    fix: 'openssl req -newkey rsa:2048 -sha256 -nodes -keyout ssl/server.key -x509 -days 3650 -out ssl/server.crt -subj "/CN=193.168.48.98"',
+  });
   process.exit(1);
 }
 
@@ -52,6 +54,6 @@ https.createServer(
   { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) },
   app
 ).listen(PORT, () => {
-  console.log(`✅ Бот запущен: https://193.168.48.98:${PORT}`);
-  console.log(`   Webhook URL: https://193.168.48.98:${PORT}/webhook`);
+  log.info('server', `Бот запущен: https://193.168.48.98:${PORT}`);
+  log.info('server', `Webhook URL: https://193.168.48.98:${PORT}/webhook`);
 });

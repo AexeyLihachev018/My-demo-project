@@ -11,6 +11,7 @@
 // =====================================================
 
 import { supabase } from '../lib/supabase.js';
+import { log }      from '../lib/logger.js';
 
 const APP_URL = process.env.APP_URL || 'https://my-demo-project-nt8u.vercel.app';
 
@@ -38,7 +39,7 @@ async function handleCatalog(req, res) {
   const MANAGER_CHAT = process.env.MANAGER_CHAT_ID;
 
   if (!BOT_TOKEN) {
-    console.error('BOT_TOKEN не задан');
+    log.error('webhook/catalog', 'BOT_TOKEN не задан');
     return res.status(200).json({ ok: false, error: 'no token' });
   }
 
@@ -132,7 +133,7 @@ async function handleCatalog(req, res) {
     return res.status(200).json({ ok: true });
 
   } catch (err) {
-    console.error('Ошибка webhook (catalog):', err);
+    log.error('webhook/catalog', 'Необработанная ошибка', err);
     return res.status(200).json({ ok: true });
   }
 }
@@ -150,7 +151,7 @@ async function handleMasterBot(req, res, master_id) {
       .single();
 
     if (error || !master) {
-      console.error('Мастер не найден:', master_id);
+      log.error('webhook/master', 'Мастер не найден', { master_id, error });
       return res.status(200).json({ ok: true });
     }
 
@@ -196,7 +197,7 @@ async function handleMasterBot(req, res, master_id) {
     return res.status(200).json({ ok: true });
 
   } catch (err) {
-    console.error('webhook error (master):', err);
+    log.error('webhook/master', 'Необработанная ошибка', err);
     return res.status(200).json({ ok: true });
   }
 }
@@ -247,6 +248,6 @@ async function sendMessage(token, chatId, text, extra = {}) {
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', ...extra }),
   });
-  if (!resp.ok) console.error('Telegram API error:', await resp.text());
+  if (!resp.ok) log.error('telegram/api', 'Ошибка sendMessage', await resp.text());
   return resp;
 }

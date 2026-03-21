@@ -7,6 +7,7 @@
 // Авторизация не нужна — это публичные данные.
 
 import { supabase } from '../../lib/supabase.js';
+import { log }      from '../../lib/logger.js';
 
 export default async function handler(req, res) {
   // Только GET-запросы
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
     .order('sort_order', { ascending: true });
 
   if (servicesError) {
-    console.error('Ошибка загрузки услуг:', servicesError);
+    log.error('master/slug', 'Ошибка загрузки услуг', servicesError);
     return res.status(500).json({ error: 'Ошибка загрузки услуг' });
   }
 
