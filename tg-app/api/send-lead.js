@@ -20,18 +20,19 @@ export default async function handler(req, res) {
     return res.status(500).json({ ok: false });
   }
 
-  const { name, phone, message, urgency, source } = req.body || {};
+  const { name, phone, message, urgency, industry, source } = req.body || {};
 
   if (!phone) {
     return res.status(400).json({ ok: false, error: 'phone required' });
   }
 
   const lines = ['📥 <b>Новая заявка с сайта</b>'];
-  if (name)    lines.push(`👤 <b>Имя:</b> ${name}`);
-  lines.push(  `📞 <b>Телефон:</b> ${phone}`);
-  if (message) lines.push(`📝 <b>Задача:</b> ${message}`);
-  if (urgency) lines.push(`⏱ <b>Срочность:</b> ${urgency}`);
-  if (source)  lines.push(`🔗 <b>Источник:</b> ${source}`);
+  if (name)     lines.push(`👤 <b>Имя:</b> ${name}`);
+  lines.push(   `📞 <b>Телефон:</b> ${phone}`);
+  if (industry) lines.push(`🏭 <b>Отрасль:</b> ${industry}`);
+  if (message)  lines.push(`📝 <b>Задача:</b> ${message}`);
+  if (urgency)  lines.push(`⏱ <b>Срочность:</b> ${urgency}`);
+  if (source)   lines.push(`🔗 <b>Источник:</b> ${source}`);
 
   try {
     const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {

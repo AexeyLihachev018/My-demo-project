@@ -1179,6 +1179,17 @@
               <input type="text" id="f_company" placeholder="ООО «Завод»">
             </div>
             <div class="form-field">
+              <label>Сфера деятельности</label>
+              <div class="urgency-row" style="flex-wrap:wrap;gap:6px">
+                <button class="urgency-btn" onclick="setIndustry(this,'Машиностроение')">Машиностроение</button>
+                <button class="urgency-btn" onclick="setIndustry(this,'АПК / сельское хозяйство')">АПК</button>
+                <button class="urgency-btn" onclick="setIndustry(this,'Строительство')">Строительство</button>
+                <button class="urgency-btn" onclick="setIndustry(this,'Нефть и газ')">Нефть и газ</button>
+                <button class="urgency-btn" onclick="setIndustry(this,'Деревообработка')">Деревообработка</button>
+                <button class="urgency-btn" onclick="setIndustry(this,'Другое')">Другое</button>
+              </div>
+            </div>
+            <div class="form-field">
               <label>Что нужно</label>
               <textarea id="f_task" rows="3" placeholder="ГЦ-80/50-300 или опишите задачу словами..."></textarea>
               <div class="ferr" id="ferr_task">Опишите задачу или укажите артикул</div>
@@ -1284,6 +1295,7 @@
   var GOST_D = [32,40,50,63,80,100,125,160,200,250,320];
   var forceUnit = 'N';
   var urgencyVal = '';
+  var industryVal = '';
 
   // ── HELPERS ──
   function pn(id) { return parseFloat(document.getElementById(id).value) || 0; }
@@ -1503,9 +1515,14 @@
 
   // ── URGENCY ──
   function setUrgency(btn, val) {
-    document.querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
+    btn.closest('.urgency-row').querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
     btn.className = 'urgency-btn selected';
     urgencyVal = val;
+  }
+  function setIndustry(btn, val) {
+    btn.closest('.urgency-row').querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
+    btn.className = 'urgency-btn selected';
+    industryVal = val;
   }
 
   // ── FORM SUBMIT ──
@@ -1527,7 +1544,7 @@
     fetch('/api/send-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, source: 'Форма КП' })
+      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, industry: industryVal, source: 'Форма КП' })
     })
     .then(function(r) { return r.json(); })
     .catch(function() { return { ok: false }; })
