@@ -1180,14 +1180,7 @@
             </div>
             <div class="form-field">
               <label>Сфера деятельности</label>
-              <div class="urgency-row" style="flex-wrap:wrap;gap:6px">
-                <button class="urgency-btn" onclick="setIndustry(this,'Машиностроение')">Машиностроение</button>
-                <button class="urgency-btn" onclick="setIndustry(this,'АПК / сельское хозяйство')">АПК</button>
-                <button class="urgency-btn" onclick="setIndustry(this,'Строительство')">Строительство</button>
-                <button class="urgency-btn" onclick="setIndustry(this,'Нефть и газ')">Нефть и газ</button>
-                <button class="urgency-btn" onclick="setIndustry(this,'Деревообработка')">Деревообработка</button>
-                <button class="urgency-btn" onclick="setIndustry(this,'Другое')">Другое</button>
-              </div>
+              <input type="text" id="f_industry" placeholder="Машиностроение, АПК, строительство…">
             </div>
             <div class="form-field">
               <label>Что нужно</label>
@@ -1295,7 +1288,6 @@
   var GOST_D = [32,40,50,63,80,100,125,160,200,250,320];
   var forceUnit = 'N';
   var urgencyVal = '';
-  var industryVal = '';
 
   // ── HELPERS ──
   function pn(id) { return parseFloat(document.getElementById(id).value) || 0; }
@@ -1519,11 +1511,6 @@
     btn.className = 'urgency-btn selected';
     urgencyVal = val;
   }
-  function setIndustry(btn, val) {
-    btn.closest('.urgency-row').querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
-    btn.className = 'urgency-btn selected';
-    industryVal = val;
-  }
 
   // ── FORM SUBMIT ──
   function submitForm() {
@@ -1544,7 +1531,7 @@
     fetch('/api/send-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, industry: industryVal, source: 'Форма КП' })
+      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, industry: document.getElementById('f_industry').value.trim(), source: 'Форма КП' })
     })
     .then(function(r) { return r.json(); })
     .catch(function() { return { ok: false }; })
@@ -1588,8 +1575,17 @@
 
   // ── PHONE MASK ──
   function phoneMask(input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (this.value.replace(/\D/g,'').length <= 1) {
+          this.value = '';
+          e.preventDefault();
+        }
+      }
+    });
     input.addEventListener('input', function() {
       var v = this.value.replace(/\D/g,'');
+      if (!v) return;
       if (v.startsWith('8')) v = '7' + v.slice(1);
       if (!v.startsWith('7')) v = '7' + v;
       v = v.slice(0,11);
