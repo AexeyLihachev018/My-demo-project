@@ -131,6 +131,67 @@ async function handleCatalog(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── Контактный запрос (позвоните, нужен товар и т.п.) ──
+    const contactKeywords = /позвон|перезвон|свяжи|свяжись|звони|напиш|написал|контакт|нужен|нужна|нужно|куп|заказ|цен|подбер|подобр|гидроцилиндр|гидростанц|помоги|помощ/i;
+    if (contactKeywords.test(text)) {
+      const firstName = msg.from?.first_name ? `, ${msg.from.first_name}` : '';
+      await sendMessage(BOT_TOKEN, chatId,
+        `Понял${firstName}! Наш менеджер свяжется с вами.\n\n` +
+        `📞 Можете позвонить сами прямо сейчас:\n` +
+        `*+7 (3412) 77-57-04*\n` +
+        `*8 (800) 444-70-65* — бесплатно\n` +
+        `🕐 Пн–Пт 8:30–17:00\n\n` +
+        `Или нажмите кнопку ниже — мы перезвоним вам:`,
+        {
+          reply_markup: {
+            keyboard: [[
+              { text: '📲 Отправить мой номер', request_contact: true }
+            ]],
+            resize_keyboard: true,
+            one_time_keyboard: true
+          }
+        }
+      );
+
+      if (MANAGER_CHAT) {
+        const name = [msg.from?.first_name, msg.from?.last_name].filter(Boolean).join(' ') || 'Неизвестен';
+        const username = msg.from?.username ? `@${msg.from.username}` : 'нет';
+        await sendMessage(BOT_TOKEN, MANAGER_CHAT,
+          `💬 <b>Клиент написал в бот</b>\n` +
+          `👤 <b>Имя:</b> ${name}\n` +
+          `🔗 <b>Username:</b> ${username}\n` +
+          `💬 <b>Сообщение:</b> ${text}\n\n` +
+          `Ждёт звонка или отправит номер через кнопку.`,
+          { parse_mode: 'HTML' }
+        );
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    // ── Клиент отправил свой контакт через кнопку ────
+    if (msg.contact) {
+      const contact = msg.contact;
+      const phone   = contact.phone_number;
+      const name    = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Не указано';
+
+      await sendMessage(BOT_TOKEN, chatId,
+        `Отлично! Номер получили ✅\n\nМенеджер перезвонит вам в рабочее время: Пн–Пт 8:30–17:00.`,
+        { reply_markup: { remove_keyboard: true } }
+      );
+
+      if (MANAGER_CHAT) {
+        await sendMessage(BOT_TOKEN, MANAGER_CHAT,
+          `📲 <b>Клиент оставил номер через бот</b>\n` +
+          `👤 <b>Имя:</b> ${name}\n` +
+          `📞 <b>Телефон:</b> ${phone}\n` +
+          `🔗 <b>Username:</b> ${msg.from?.username ? `@${msg.from.username}` : 'нет'}`,
+          { parse_mode: 'HTML' }
+        );
+        log.info('webhook/contact', 'Клиент оставил номер', { phone, name });
+      }
+      return res.status(200).json({ ok: true });
+    }
+
     // ── Любое другое сообщение ────────────────────────
     await sendMessage(BOT_TOKEN, chatId, `Используйте кнопку ниже для работы с каталогом 👇`, {
       reply_markup: {
