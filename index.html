@@ -1201,7 +1201,7 @@
                 <button class="urgency-btn" onclick="setUrgency(this,'Планирую заранее')">Планирую</button>
               </div>
             </div>
-            <button class="btn-submit" onclick="submitForm()">Получить КП</button>
+            <button class="btn-submit" id="f_submit_btn" onclick="submitForm()">Получить КП</button>
             <div class="form-note">Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.<br>Спам не рассылаем. Данные не передаём третьим лицам.</div>
           </div>
         </div>
@@ -1209,6 +1209,7 @@
           <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
           <h3>Заявка принята!</h3>
           <p>Инженер перезвонит на <strong id="successPhone" style="color:var(--text)">ваш номер</strong><br>в рабочее время (Пн–Пт 8:30–17:00).<br>Если отправили в выходной — ответим в понедельник.</p>
+          <button onclick="resetForm()" style="margin-top:20px;background:none;border:1px solid rgba(255,255,255,.2);color:var(--muted);font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;">Отправить ещё одну заявку</button>
         </div>
       </div>
     </div>
@@ -1542,7 +1543,25 @@
       suc.className = 'form-success show';
       var ph = document.getElementById('successPhone');
       if (ph) ph.textContent = phoneVal;
+      setTimeout(resetForm, 10000);
     });
+  }
+
+  function resetForm() {
+    ['f_name','f_task','f_phone','f_industry','f_company'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.value = ''; el.className = el.className.replace(/\s*err/g,''); }
+    });
+    ['ferr_name','ferr_task','ferr_phone'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.className = 'ferr';
+    });
+    document.querySelectorAll('.urgency-btn').forEach(function(b) { b.className = 'urgency-btn'; });
+    urgencyVal = '';
+    var btn = document.getElementById('f_submit_btn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Получить КП'; }
+    document.getElementById('formSuccess').className = 'form-success';
+    document.getElementById('formWrap').style.display = '';
   }
 
   // ── MODAL ──
