@@ -13,14 +13,21 @@ import { log }              from './lib/logger.js';
 import webhookHandler        from './api/webhook.js';
 import mSlugHandler          from './api/m/[slug].js';
 import masterSlugHandler     from './api/master/[slug].js';
+import sendLeadHandler       from './api/send-lead.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json());
 
+// Лендинг (главная страница сайта)
+app.get('/', (_req, res) => res.sendFile(join(__dirname, '../index.html')));
+
+// Заявка с сайта → Telegram
+app.post('/api/send-lead', sendLeadHandler);
+
 // Проверка работы
-app.get('/', (req, res) => res.json({ ok: true, status: 'Bot is running' }));
+app.get('/health', (_req, res) => res.json({ ok: true, status: 'Bot is running' }));
 
 // Telegram шлёт сюда сообщения
 app.post('/webhook', webhookHandler);

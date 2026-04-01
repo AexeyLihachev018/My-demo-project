@@ -1522,11 +1522,22 @@
     else { document.getElementById('f_phone').className=''; document.getElementById('ferr_phone').className='ferr'; }
     if (!ok) return;
     var phoneVal = phone;
-    document.getElementById('formWrap').style.display = 'none';
-    var suc = document.getElementById('formSuccess');
-    suc.className = 'form-success show';
-    var ph = document.getElementById('successPhone');
-    if (ph) ph.textContent = phoneVal;
+    var btn = document.getElementById('f_submit_btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Отправляю…'; }
+    fetch('/api/send-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, source: 'Форма КП' })
+    })
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ok: false }; })
+    .then(function() {
+      document.getElementById('formWrap').style.display = 'none';
+      var suc = document.getElementById('formSuccess');
+      suc.className = 'form-success show';
+      var ph = document.getElementById('successPhone');
+      if (ph) ph.textContent = phoneVal;
+    });
   }
 
   // ── MODAL ──
@@ -1537,9 +1548,20 @@
     var name = document.getElementById('m_name').value.trim();
     var phone = document.getElementById('m_phone').value.trim();
     if (!name || !phone || phone.replace(/\D/g,'').length < 10) return;
-    document.getElementById('modalForm').style.display = 'none';
-    document.getElementById('modalSuccess').className = 'modal-success show';
-    setTimeout(closeModal, 3000);
+    var btn = document.querySelector('#modalForm .modal-submit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Отправляю…'; }
+    fetch('/api/send-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, phone: phone, source: 'Заказать звонок' })
+    })
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ok: false }; })
+    .then(function() {
+      document.getElementById('modalForm').style.display = 'none';
+      document.getElementById('modalSuccess').className = 'modal-success show';
+      setTimeout(closeModal, 3000);
+    });
   }
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 

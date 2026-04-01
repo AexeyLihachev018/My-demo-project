@@ -52,6 +52,15 @@ async function handleCatalog(req, res) {
     const text    = msg.text || '';
     const webData = msg.web_app_data?.data;
 
+    // ── /chatid (служебная: узнать свой chat_id) ──────
+    if (text.startsWith('/chatid')) {
+      log.info('webhook/chatid', 'Запрос chat_id', { chatId, username: msg.from?.username });
+      await sendMessage(BOT_TOKEN, chatId,
+        `Ваш chat_id: \`${chatId}\`\n\nПропишите это значение в MANAGER_CHAT_ID на VPS.`
+      );
+      return res.status(200).json({ ok: true });
+    }
+
     // ── /start ────────────────────────────────────────
     if (text.startsWith('/start')) {
       const firstName = msg.from?.first_name || '';
