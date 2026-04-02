@@ -291,6 +291,34 @@
     .form-success h3 { font-size:22px; margin-bottom:8px; }
     .form-success p { color:var(--muted); font-size:14px; line-height:1.7; }
 
+    /* ══ WIZARD ══ */
+    .wiz-header { margin-bottom:20px; }
+    .wiz-step-label { font-size:12px; color:var(--muted); margin-bottom:8px; }
+    .wiz-progress { height:4px; background:rgba(255,255,255,.08); border-radius:4px; overflow:hidden; }
+    .wiz-progress-fill { height:100%; background:linear-gradient(90deg,var(--orange),var(--orange-dk)); border-radius:4px; transition:width .4s ease; width:25%; }
+    .wiz-viewport { overflow:hidden; }
+    .wiz-slides { display:flex; transition:transform .35s cubic-bezier(.4,0,.2,1); }
+    .wiz-slide { min-width:100%; box-sizing:border-box; }
+    .wiz-title { font-size:18px; font-weight:900; font-family:'Arial Black',Arial,sans-serif; color:var(--text); margin-bottom:18px; line-height:1.3; }
+    .wiz-btn-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .wiz-opt-btn { padding:14px 12px; border-radius:12px; background:rgba(255,255,255,.04); border:1px solid var(--border2); color:var(--text); cursor:pointer; transition:.2s; text-align:left; display:flex; flex-direction:column; gap:4px; width:100%; }
+    .wiz-opt-btn:hover { border-color:rgba(249,115,22,.4); background:rgba(249,115,22,.06); }
+    .wiz-opt-btn.selected { background:rgba(249,115,22,.12); border-color:var(--orange); }
+    .wiz-opt-icon { font-size:20px; line-height:1; }
+    .wiz-opt-label { font-size:14px; font-weight:700; color:var(--text); }
+    .wiz-opt-sub { font-size:11px; color:var(--muted); line-height:1.4; }
+    .wiz-goal-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .wiz-goal-btn { padding:10px 14px; border-radius:10px; background:rgba(255,255,255,.04); border:1px solid var(--border2); color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
+    .wiz-goal-btn:hover { border-color:rgba(249,115,22,.4); color:var(--text); }
+    .wiz-goal-btn.selected { background:rgba(249,115,22,.12); border-color:var(--orange); color:var(--orange); }
+    .wiz-nav { display:flex; justify-content:space-between; align-items:center; margin-top:24px; gap:10px; }
+    .wiz-btn-back { background:none; border:1px solid var(--border2); color:var(--muted); font-size:14px; padding:10px 20px; border-radius:10px; cursor:pointer; transition:.2s; flex-shrink:0; }
+    .wiz-btn-back:hover { border-color:rgba(255,255,255,.3); color:var(--text); }
+    .wiz-btn-back.hidden { visibility:hidden; pointer-events:none; }
+    .wiz-btn-next { flex:1; padding:13px 20px; border-radius:12px; background:linear-gradient(135deg,var(--orange),var(--orange-dk)); color:#fff; font-size:15px; font-weight:900; font-family:'Arial Black',Arial,sans-serif; border:none; cursor:pointer; box-shadow:0 0 20px rgba(249,115,22,.3); transition:.25s; }
+    .wiz-btn-next:hover { box-shadow:0 0 36px rgba(249,115,22,.5); transform:translateY(-1px); }
+    .wiz-btn-next:disabled { opacity:.6; cursor:default; transform:none; }
+
     /* ══ FOOTER ══ */
     footer { padding:48px 32px; border-top:1px solid var(--border); }
     .footer-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr; gap:40px; }
@@ -1169,48 +1197,95 @@
         </div>
       </div>
       <div class="cta-right">
-        <div id="formWrap">
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Имя и должность</label>
-              <input type="text" id="f_name" placeholder="Иван, главный механик">
-              <div class="ferr" id="ferr_name">Пожалуйста, укажите имя</div>
-            </div>
-            <div class="form-field">
-              <label>Компания</label>
-              <input type="text" id="f_company" placeholder="ООО «Завод»">
-            </div>
-            <div class="form-field">
-              <label>Сфера деятельности</label>
-              <input type="text" id="f_industry" placeholder="Машиностроение, АПК, строительство…">
-            </div>
-            <div class="form-field">
-              <label>Что нужно</label>
-              <textarea id="f_task" rows="3" placeholder="ГЦ-80/50-300 или опишите задачу словами..."></textarea>
-              <div class="ferr" id="ferr_task">Опишите задачу или укажите артикул</div>
-            </div>
-            <div class="form-field">
-              <label>Телефон</label>
-              <input type="tel" id="f_phone" placeholder="+7 (___) ___-__-__">
-              <div class="ferr" id="ferr_phone">Введите корректный номер телефона</div>
-            </div>
-            <div class="form-field">
-              <label>Когда нужно</label>
-              <div class="urgency-row">
-                <button class="urgency-btn" onclick="setUrgency(this,'Срочно (до 5 дней)')">Срочно</button>
-                <button class="urgency-btn" onclick="setUrgency(this,'В течение месяца')">В течение месяца</button>
-                <button class="urgency-btn" onclick="setUrgency(this,'Планирую заранее')">Планирую</button>
-              </div>
-            </div>
-            <button class="btn-submit" id="f_submit_btn" onclick="submitForm()">Получить КП</button>
-            <div class="form-note">Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.<br>Спам не рассылаем. Данные не передаём третьим лицам.</div>
+        <!-- WIZARD FORM -->
+        <div id="wizardWrap">
+          <div class="wiz-header">
+            <div class="wiz-step-label">Шаг <span id="wizStepNum">1</span> из 4</div>
+            <div class="wiz-progress"><div class="wiz-progress-fill" id="wizProgressFill"></div></div>
           </div>
+          <div class="wiz-viewport">
+            <div class="wiz-slides" id="wizSlides">
+
+              <!-- Шаг 1: Контакт -->
+              <div class="wiz-slide">
+                <div class="wiz-title">Как к вам обращаться?</div>
+                <div class="form-field">
+                  <label>Ваше имя</label>
+                  <input type="text" id="w_name" placeholder="Иван">
+                  <div class="ferr" id="werr_name">Пожалуйста, укажите имя</div>
+                </div>
+                <div class="form-field" style="margin-top:14px">
+                  <label>Telegram для связи</label>
+                  <input type="text" id="w_tg" placeholder="@username">
+                  <div class="ferr" id="werr_tg">Укажите ваш Telegram @username</div>
+                </div>
+              </div>
+
+              <!-- Шаг 2: Бизнес -->
+              <div class="wiz-slide">
+                <div class="wiz-title">Какой у вас бизнес?</div>
+                <div class="form-field">
+                  <label>Сфера деятельности / чем занимаетесь</label>
+                  <textarea id="w_biz" rows="4" placeholder="Например: интернет-магазин, производство, консалтинг..."></textarea>
+                </div>
+              </div>
+
+              <!-- Шаг 3: Опыт в ИИ -->
+              <div class="wiz-slide">
+                <div class="wiz-title">Ваш опыт с ИИ?</div>
+                <div class="wiz-btn-grid">
+                  <button class="wiz-opt-btn" onclick="setWizExp(this,'Новичок')">
+                    <span class="wiz-opt-icon">🌱</span>
+                    <span class="wiz-opt-label">Новичок</span>
+                    <span class="wiz-opt-sub">Только начинаю знакомиться</span>
+                  </button>
+                  <button class="wiz-opt-btn" onclick="setWizExp(this,'Базовый')">
+                    <span class="wiz-opt-icon">📘</span>
+                    <span class="wiz-opt-label">Базовый</span>
+                    <span class="wiz-opt-sub">Пробовал ChatGPT и другие</span>
+                  </button>
+                  <button class="wiz-opt-btn" onclick="setWizExp(this,'Продвинутый')">
+                    <span class="wiz-opt-icon">⚡</span>
+                    <span class="wiz-opt-label">Продвинутый</span>
+                    <span class="wiz-opt-sub">Использую в работе регулярно</span>
+                  </button>
+                  <button class="wiz-opt-btn" onclick="setWizExp(this,'Эксперт')">
+                    <span class="wiz-opt-icon">🚀</span>
+                    <span class="wiz-opt-label">Эксперт</span>
+                    <span class="wiz-opt-sub">Строю AI-продукты или автоматизации</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Шаг 4: Цели -->
+              <div class="wiz-slide">
+                <div class="wiz-title">Что хотите получить?</div>
+                <div class="wiz-goal-grid">
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Внедрить ИИ в бизнес')">Внедрить ИИ в бизнес</button>
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Обучить сотрудников')">Обучить сотрудников</button>
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Автоматизировать рутину')">Автоматизировать рутину</button>
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Найти партнёров')">Найти партнёров</button>
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Изучить технологии')">Изучить технологии</button>
+                  <button class="wiz-goal-btn" onclick="toggleGoal(this,'Найти инвесторов')">Найти инвесторов</button>
+                </div>
+                <div class="form-note" style="margin-top:16px">Можно выбрать несколько</div>
+              </div>
+
+            </div>
+          </div>
+          <div class="wiz-nav">
+            <button class="wiz-btn-back hidden" id="wizBtnBack" onclick="wizBack()">← Назад</button>
+            <button class="wiz-btn-next" id="wizBtnNext" onclick="wizNext()">Далее →</button>
+          </div>
+          <div class="form-note" style="margin-top:12px">Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.</div>
         </div>
-        <div class="form-success" id="formSuccess">
+
+        <!-- Экран успеха -->
+        <div class="form-success" id="wizSuccess">
           <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
           <h3>Заявка принята!</h3>
-          <p>Инженер перезвонит на <strong id="successPhone" style="color:var(--text)">ваш номер</strong><br>в рабочее время (Пн–Пт 8:30–17:00).<br>Если отправили в выходной — ответим в понедельник.</p>
-          <button onclick="resetForm()" style="margin-top:20px;background:none;border:1px solid rgba(255,255,255,.2);color:var(--muted);font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;">Отправить ещё одну заявку</button>
+          <p>Свяжемся с вами в ближайшее время.<br>Обычно отвечаем в течение нескольких часов.</p>
+          <button onclick="resetWizard()" style="margin-top:20px;background:none;border:1px solid rgba(255,255,255,.2);color:var(--muted);font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;">Заполнить ещё раз</button>
         </div>
       </div>
     </div>
@@ -1290,7 +1365,9 @@
   // ── CONSTANTS ──
   var GOST_D = [32,40,50,63,80,100,125,160,200,250,320];
   var forceUnit = 'N';
-  var urgencyVal = '';
+  var wizStep = 1;
+  var wizExpVal = '';
+  var wizGoals = [];
 
   // ── HELPERS ──
   function pn(id) { return parseFloat(document.getElementById(id).value) || 0; }
@@ -1494,9 +1571,6 @@
 
   // ── SEND TO FORM ──
   function sendToForm() {
-    var art = document.getElementById('s2_art_code').textContent;
-    var task = document.getElementById('f_task');
-    if (task) task.value = art + ' — рассчитано на сайте';
     document.getElementById('contacts').scrollIntoView({behavior:'smooth'});
   }
 
@@ -1508,61 +1582,81 @@
     });
   });
 
-  // ── URGENCY ──
-  function setUrgency(btn, val) {
-    btn.closest('.urgency-row').querySelectorAll('.urgency-btn').forEach(function(b){b.className='urgency-btn';});
-    btn.className = 'urgency-btn selected';
-    urgencyVal = val;
+  // ── WIZARD ──
+  function wizUpdateUI() {
+    document.getElementById('wizStepNum').textContent = wizStep;
+    document.getElementById('wizProgressFill').style.width = (wizStep / 4 * 100) + '%';
+    document.getElementById('wizSlides').style.transform = 'translateX(-' + ((wizStep - 1) * 100) + '%)';
+    var back = document.getElementById('wizBtnBack');
+    var next = document.getElementById('wizBtnNext');
+    back.className = wizStep === 1 ? 'wiz-btn-back hidden' : 'wiz-btn-back';
+    next.textContent = wizStep === 4 ? 'Отправить' : 'Далее →';
+    next.disabled = false;
   }
 
-  // ── FORM SUBMIT ──
-  function submitForm() {
-    var name = document.getElementById('f_name').value.trim();
-    var task = document.getElementById('f_task').value.trim();
-    var phone = document.getElementById('f_phone').value.trim();
-    var ok = true;
-    if (!name) { document.getElementById('f_name').className='form-field-input err'; document.getElementById('ferr_name').className='ferr show'; ok=false; }
-    else { document.getElementById('f_name').className=''; document.getElementById('ferr_name').className='ferr'; }
-    if (!task) { document.getElementById('f_task').className='form-field-input err'; document.getElementById('ferr_task').className='ferr show'; ok=false; }
-    else { document.getElementById('f_task').className=''; document.getElementById('ferr_task').className='ferr'; }
-    if (!phone || phone.replace(/\D/g,'').length < 10) { document.getElementById('f_phone').className='form-field-input err'; document.getElementById('ferr_phone').className='ferr show'; ok=false; }
-    else { document.getElementById('f_phone').className=''; document.getElementById('ferr_phone').className='ferr'; }
-    if (!ok) return;
-    var phoneVal = phone;
-    var btn = document.getElementById('f_submit_btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Отправляю…'; }
+  function wizNext() {
+    if (wizStep === 1) {
+      var name = document.getElementById('w_name').value.trim();
+      var tg = document.getElementById('w_tg').value.trim();
+      var ok = true;
+      if (!name) { document.getElementById('werr_name').className = 'ferr show'; ok = false; }
+      else { document.getElementById('werr_name').className = 'ferr'; }
+      if (!tg) { document.getElementById('werr_tg').className = 'ferr show'; ok = false; }
+      else { document.getElementById('werr_tg').className = 'ferr'; }
+      if (!ok) return;
+    }
+    if (wizStep < 4) { wizStep++; wizUpdateUI(); return; }
+    var btn = document.getElementById('wizBtnNext');
+    btn.disabled = true; btn.textContent = 'Отправляю…';
+    var name = document.getElementById('w_name').value.trim();
+    var tg = document.getElementById('w_tg').value.trim();
+    var biz = document.getElementById('w_biz').value.trim();
     fetch('/api/send-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, phone: phoneVal, message: task, urgency: urgencyVal, industry: document.getElementById('f_industry').value.trim(), source: 'Форма КП' })
+      body: JSON.stringify({
+        name: name,
+        phone: tg,
+        industry: biz,
+        message: 'Опыт в ИИ: ' + (wizExpVal || 'не указан') + '\nЦели: ' + (wizGoals.length ? wizGoals.join(', ') : 'не указаны'),
+        source: 'Анкета'
+      })
     })
     .then(function(r) { return r.json(); })
     .catch(function() { return { ok: false }; })
     .then(function() {
-      document.getElementById('formWrap').style.display = 'none';
-      var suc = document.getElementById('formSuccess');
-      suc.className = 'form-success show';
-      var ph = document.getElementById('successPhone');
-      if (ph) ph.textContent = phoneVal;
-      setTimeout(resetForm, 10000);
+      document.getElementById('wizardWrap').style.display = 'none';
+      document.getElementById('wizSuccess').className = 'form-success show';
     });
   }
 
-  function resetForm() {
-    ['f_name','f_task','f_phone','f_industry','f_company'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) { el.value = ''; el.className = el.className.replace(/\s*err/g,''); }
-    });
-    ['ferr_name','ferr_task','ferr_phone'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.className = 'ferr';
-    });
-    document.querySelectorAll('.urgency-btn').forEach(function(b) { b.className = 'urgency-btn'; });
-    urgencyVal = '';
-    var btn = document.getElementById('f_submit_btn');
-    if (btn) { btn.disabled = false; btn.textContent = 'Получить КП'; }
-    document.getElementById('formSuccess').className = 'form-success';
-    document.getElementById('formWrap').style.display = '';
+  function wizBack() {
+    if (wizStep > 1) { wizStep--; wizUpdateUI(); }
+  }
+
+  function setWizExp(btn, val) {
+    document.querySelectorAll('.wiz-opt-btn').forEach(function(b) { b.className = 'wiz-opt-btn'; });
+    btn.className = 'wiz-opt-btn selected';
+    wizExpVal = val;
+  }
+
+  function toggleGoal(btn, val) {
+    var idx = wizGoals.indexOf(val);
+    if (idx === -1) { wizGoals.push(val); btn.className = 'wiz-goal-btn selected'; }
+    else { wizGoals.splice(idx, 1); btn.className = 'wiz-goal-btn'; }
+  }
+
+  function resetWizard() {
+    wizStep = 1; wizExpVal = ''; wizGoals = [];
+    document.getElementById('w_name').value = '';
+    document.getElementById('w_tg').value = '';
+    document.getElementById('w_biz').value = '';
+    document.querySelectorAll('.wiz-opt-btn').forEach(function(b) { b.className = 'wiz-opt-btn'; });
+    document.querySelectorAll('.wiz-goal-btn').forEach(function(b) { b.className = 'wiz-goal-btn'; });
+    ['werr_name','werr_tg'].forEach(function(id) { var el = document.getElementById(id); if (el) el.className = 'ferr'; });
+    document.getElementById('wizardWrap').style.display = '';
+    document.getElementById('wizSuccess').className = 'form-success';
+    wizUpdateUI();
   }
 
   // ── MODAL ──
@@ -1619,8 +1713,8 @@
     });
   }
   document.addEventListener('DOMContentLoaded', function() {
-    phoneMask(document.getElementById('f_phone'));
     phoneMask(document.getElementById('m_phone'));
+    wizUpdateUI();
   });
 
   // ── SCROLL REVEAL ──
