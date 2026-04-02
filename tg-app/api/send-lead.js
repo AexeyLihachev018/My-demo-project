@@ -50,6 +50,15 @@ export default async function handler(req, res) {
       return res.status(500).json({ ok: false });
     }
     log.info('send-lead', 'Заявка отправлена менеджеру', { name, phone });
+
+    // Дублируем заявку в Google Sheets
+    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyMjE2qq1sdu5IIyQsxXm9fRXVPQxajGKdid6jelYm6R5GMtP-WEfXX51YZBUB6s-Vi/exec';
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, industry, message, urgency, source }),
+    }).catch(err => log.error('send-lead', 'Ошибка отправки в Sheets', { err: err.message }));
+
     return res.json({ ok: true });
   } catch (err) {
     log.error('send-lead', 'Ошибка fetch', { err: err.message });
