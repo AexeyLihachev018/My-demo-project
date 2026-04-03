@@ -2,8 +2,9 @@
 
 **Проект:** Telegram Mini App «Промгидравлика — каталог гидроцилиндров»
 **Бот:** @PromGidravlika_Bot
-**Продакшн URL:** https://my-demo-project-nt8u.vercel.app/
-**Webhook:** https://my-demo-project-nt8u.vercel.app/api/webhook
+**Mini App URL:** https://my-demo-project-nt8u.vercel.app/
+**Сервер бота:** https://193.168.48.98:8443 (Beget VPS, PM2)
+**Webhook:** https://193.168.48.98:8443/webhook
 
 ---
 
@@ -11,18 +12,24 @@
 
 ```
 tg-app/
-  index.html          — единственный файл Mini App (весь UI, CSS, JS, данные)
-  api/webhook.js      — Vercel Serverless Function: обработка команд и заявок бота
-  api/set-webhook.js  — одноразовый endpoint регистрации webhook
-  vercel.json         — настройки Vercel (rewrites, CORS-заголовки)
-  .env.example        — шаблон переменных окружения
+  index.html              — единственный файл Mini App (весь UI, CSS, JS, данные)
+  server.js               — Express HTTPS-сервер (запускается на VPS)
+  api/webhook.js          — обработка команд и заявок бота
+  api/set-webhook.js      — одноразовый endpoint регистрации webhook
+  api/platform-webhook.js — платформа мастеров (онбординг)
+  api/m/[slug].js         — страница мастера /m/:slug
+  api/master/[slug].js    — API данных мастера (JSON)
+  lib/logger.js           — логирование (info/warn/error → logs/errors.log)
+  lib/supabase.js         — клиент Supabase
+  vercel.json             — настройки Vercel (rewrites, CORS-заголовки)
+  .env.example            — шаблон переменных окружения
 ```
 
-**Стек:** Vanilla HTML/CSS/JS (никаких npm-зависимостей), Vercel Serverless (Node.js ES modules), Telegram Bot API.
+**Стек:** Vanilla HTML/CSS/JS (фронтенд), Node.js ES modules + Express (сервер), Supabase (БД), Telegram Bot API.
 
 Два независимых компонента:
-- **Mini App** — фронтенд, работает в браузере или внутри Telegram
-- **Бот** — серверная часть, получает команды и заявки из Mini App
+- **Mini App** — фронтенд, работает в браузере или внутри Telegram (Vercel)
+- **Бот** — серверная часть на VPS, получает команды и заявки из Mini App
 
 ---
 
@@ -77,26 +84,34 @@ location.reload();
 
 ## 4. Переменные окружения (для разворачивания копии)
 
-Файл `.env` (не в git, создать вручную по шаблону `.env.example`):
+Файл `.env` на VPS: `/app/bot/tg-app/.env` (не в git, создать по шаблону `.env.example`):
 
 ```env
 BOT_TOKEN=<токен от @BotFather>
+APP_URL=https://193.168.48.98:8443
 MANAGER_CHAT_ID=<chat_id менеджера — узнать через @userinfobot>
+SUPABASE_URL=<Project URL из Supabase>
+SUPABASE_SERVICE_ROLE_KEY=<service_role ключ из Supabase>
 WEBHOOK_SECRET=<любая строка для защиты /api/set-webhook>
 ```
 
-В Vercel: **Settings → Environment Variables** — добавить те же три переменные.
+После обновления .env перезапустить бота:
+```bash
+pm2 restart bot
+```
 
-После деплоя зарегистрировать webhook (один раз):
+Зарегистрировать webhook с самоподписанным сертификатом (один раз):
+```bash
+curl -F "url=https://193.168.48.98:8443/webhook" \
+     -F "certificate=@ssl/server.crt" \
+     "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook"
 ```
-GET https://my-demo-project-nt8u.vercel.app/api/set-webhook?secret=ТВОЙ_WEBHOOK_SECRET
-```
-Должен вернуть `{"ok":true,"result":true}`.
+Должен вернуть `{"ok":true}`.
 
 Проверить статус webhook:
 ```bash
 curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
-# Ожидаемо: "url" содержит /api/webhook, "last_error_message" отсутствует
+# Ожидаемо: "url" содержит 193.168.48.98:8443/webhook, "last_error_message" отсутствует
 ```
 
 ---
@@ -315,26 +330,28 @@ curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
 
 ## 8. Диагностика: бот не отвечает
 
-**Шаг 1.** Проверить статус webhook:
+**Шаг 1.** Проверить статус процесса PM2:
+```bash
+ssh root@193.168.48.98
+pm2 status
+# Должно быть: online
+```
+
+**Шаг 2.** Посмотреть логи ошибок:
+```bash
+pm2 logs bot          # логи в реальном времени
+cat /app/bot/tg-app/logs/errors.log   # файл ошибок
+```
+
+**Шаг 3.** Проверить статус webhook:
 ```bash
 curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
 ```
-Должно быть: `"url": "https://my-demo-project-nt8u.vercel.app/api/webhook"`.
-
-**Шаг 2.** Проверить что BOT_TOKEN задан:
-```bash
-# Создать временный GET-обработчик или проверить логи Vercel
-# В коде webhook.js: если BOT_TOKEN не задан — возвращает {"ok":false,"error":"no token"}
-```
-
-**Шаг 3.** Проверить логи Vercel:
-```
-Vercel Dashboard → my-demo-project-nt8u → Functions → api/webhook → Logs
-```
+Должно быть: `"url": "https://193.168.48.98:8443/webhook"`.
 
 **Шаг 4.** Отправить тестовый POST вручную:
 ```bash
-curl -X POST https://my-demo-project-nt8u.vercel.app/api/webhook \
+curl -k -X POST https://193.168.48.98:8443/webhook \
   -H "Content-Type: application/json" \
   -d '{"message":{"chat":{"id":123},"text":"/start","from":{"first_name":"Test"}}}'
 # Ожидаемо: {"ok":true} или {"ok":false,"error":"..."} с деталями
@@ -342,9 +359,10 @@ curl -X POST https://my-demo-project-nt8u.vercel.app/api/webhook \
 
 **Шаг 5.** Зарегистрировать webhook заново:
 ```bash
-curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://my-demo-project-nt8u.vercel.app/api/webhook"}'
+cd /app/bot/tg-app
+curl -F "url=https://193.168.48.98:8443/webhook" \
+     -F "certificate=@ssl/server.crt" \
+     "https://api.telegram.org/bot$(grep BOT_TOKEN .env | cut -d= -f2)/setWebhook"
 ```
 
 ---

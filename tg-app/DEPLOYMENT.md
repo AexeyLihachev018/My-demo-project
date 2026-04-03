@@ -1,170 +1,155 @@
-# DEPLOYMENT.md — Как бот работает 24/7
+# DEPLOYMENT.md — Как бот работает и как его обновлять
 
-## Как это устроено (без сервера!)
+## Текущая конфигурация (продакшн)
 
-Этот проект **не требует сервера**. Всё работает через три облачных сервиса:
+```
+Бот:      @PromGidravlika_bot
+Сервер:   Beget VPS — 193.168.48.98:8443 (HTTPS, самоподписанный SSL)
+Mini App: https://my-demo-project-nt8u.vercel.app (Vercel)
+Webhook:  https://193.168.48.98:8443/webhook
+PM2:      процесс "bot", /app/bot/tg-app/
+```
+
+---
+
+## Как устроена архитектура
 
 ```
 GitHub (код)
-    ↓ при каждом push
-Vercel (запускает код)
-    ↓ запросы к базе данных
-Supabase (хранит данные)
+    ↓ git pull вручную на сервере
+Beget VPS (Node.js + Express + PM2)
+    ↓ запросы к БД
+Supabase (PostgreSQL)
 
-Telegram → POST запрос → Vercel → ответ боту
+Telegram → POST /webhook → VPS → ответ боту
+Пользователь → открывает Mini App → Vercel (index.html)
 ```
 
-- **GitHub** — хранит код
-- **Vercel** — запускает код когда приходит запрос (бесплатно, 24/7)
-- **Supabase** — база данных (бесплатно до 500MB)
-- **Telegram** — сам доставляет сообщения на Vercel через webhook
+- **GitHub** — хранит весь код
+- **VPS** — запускает Express-сервер 24/7, обрабатывает webhook и API
+- **Vercel** — отдаёт фронтенд Mini App (`tg-app/index.html`)
+- **Supabase** — база данных (мастера, записи, сессии)
+- **PM2** — процесс-менеджер: автозапуск при перезагрузке, авторестарт при краше
 
 ---
 
-## Что такое webhook (простыми словами)
+## Как обновить бота (основной сценарий)
 
-Обычный бот постоянно спрашивает Telegram «есть новые сообщения?» — это плохо.
+### 1. Запушить изменения в GitHub
+```bash
+git add .
+git commit -m "fix: описание изменения"
+git push
+```
 
-Webhook — это наоборот: Telegram сам звонит на наш адрес когда приходит сообщение.
-Наш адрес: `https://my-demo-project-nt8u.vercel.app/api/webhook`
+### 2. Зайти на VPS и подтянуть код
+```bash
+ssh root@193.168.48.98
+cd /app/bot && git pull && pm2 restart bot
+```
 
-Зарегистрировать webhook нужно **один раз**. После этого всё работает само.
+### 3. Проверить что бот поднялся
+```bash
+pm2 status
+# Должно быть: online
+```
+
+### 4. Проверить бота в Telegram
+Написать `/start` боту [@PromGidravlika_bot](https://t.me/PromGidravlika_bot) — должна прийти кнопка «Открыть каталог».
 
 ---
 
-## Переменные окружения (секреты)
+## Переменные окружения
 
-Это настройки которые нельзя хранить в коде (токены, пароли).
-Хранятся в Vercel → Project → Settings → **Environment Variables**.
+Файл `.env` на VPS: `/app/bot/tg-app/.env` (не в git)
 
-| Переменная | Откуда взять | Обязательная? |
+| Переменная | Описание | Обязательная? |
 |---|---|---|
-| `BOT_TOKEN` | @BotFather → токен бота @PromGidravlika_bot | ✅ Да |
-| `MANAGER_CHAT_ID` | Твой chat_id (узнать через @userinfobot) | ✅ Да |
+| `BOT_TOKEN` | Токен бота от @BotFather | ✅ Да |
+| `APP_URL` | `https://193.168.48.98:8443` | ✅ Да |
+| `MANAGER_CHAT_ID` | chat_id менеджера (узнать через @userinfobot) | ✅ Да |
 | `SUPABASE_URL` | Supabase → Project Settings → API → Project URL | ✅ Да |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → service_role (secret) | ✅ Да |
-| `WEBHOOK_SECRET` | Любая строка, например `mySecret123` | ✅ Да |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → service_role (secret) | ✅ Да |
+| `WEBHOOK_SECRET` | Любая строка для защиты /api/set-webhook | ✅ Да |
 
-> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` — это секретный ключ с полным доступом к БД. Никому не давать!
+> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` — полный доступ к БД. Никому не передавать!
 
----
-
-## Полная пошаговая инструкция
-
-### Шаг 1 — Убедись что код в GitHub
-
+Чтобы обновить переменную на VPS:
 ```bash
-# В терминале, в папке Project-1:
-git status            # покажет изменения
-git add .
-git commit -m "feat: deploy"
-git push
+ssh root@193.168.48.98
+nano /app/bot/tg-app/.env
+pm2 restart bot
 ```
-
-После push Vercel **автоматически** начнёт деплой (занимает ~1 минуту).
 
 ---
 
-### Шаг 2 — Проверь переменные окружения в Vercel
+## SSL и webhook
 
-1. Открой [vercel.com](https://vercel.com) → войди в аккаунт
-2. Выбери проект `my-demo-project` (или как он называется)
-3. Перейди: **Settings → Environment Variables**
-4. Убедись что все 5 переменных есть:
-   - `BOT_TOKEN`
-   - `MANAGER_CHAT_ID`
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `WEBHOOK_SECRET`
+Бот работает на самоподписанном сертификате. Telegram поддерживает это — нужно
+передавать файл сертификата при регистрации webhook.
 
-Если какой-то нет — нажми **Add** и добавь.
-
-> ⚠️ После добавления переменной нужен редеплой (Шаг 1 — пустой коммит)
-
----
-
-### Шаг 3 — Зарегистрируй webhook (один раз)
-
-Открой в браузере эту ссылку (замени `ТВОЙ_СЕКРЕТ` на значение `WEBHOOK_SECRET`):
-
-```
-https://my-demo-project-nt8u.vercel.app/api/set-webhook?secret=ТВОЙ_СЕКРЕТ
-```
-
-Должен прийти ответ:
-```json
-{"ok": true, "result": true, "description": "Webhook was set"}
-```
-
-Если ошибка — см. раздел «Диагностика» ниже.
-
----
-
-### Шаг 4 — Проверь что бот отвечает
-
-Открой [@PromGidravlika_bot](https://t.me/PromGidravlika_bot) в Telegram и напиши `/start`.
-Должна прийти кнопка «Открыть каталог».
-
----
-
-## Как обновить бота
-
-Просто push в GitHub — Vercel сам задеплоит новую версию:
-
+### Повторно зарегистрировать webhook (если сломался)
 ```bash
-git add .
-git commit -m "fix: исправить что-то"
-git push
+ssh root@193.168.48.98
+cd /app/bot/tg-app
+curl -F "url=https://193.168.48.98:8443/webhook" \
+     -F "certificate=@ssl/server.crt" \
+     "https://api.telegram.org/bot$(grep BOT_TOKEN .env | cut -d= -f2)/setWebhook"
 ```
 
-Деплой занимает ~60 секунд. Бот продолжает отвечать во время деплоя.
+Должен прийти ответ `{"ok":true}`.
 
 ---
 
 ## Диагностика — что делать если что-то не работает
 
-### Проверить текущий webhook
-
-Открой в браузере (замени `ТОКЕН` на токен бота):
+### Проверить статус бота
+```bash
+ssh root@193.168.48.98
+pm2 status          # статус процесса
+pm2 logs bot        # последние логи в реальном времени
 ```
-https://api.telegram.org/botТОКЕН/getWebhookInfo
+
+### Посмотреть файл ошибок
+```bash
+ssh root@193.168.48.98
+cat /app/bot/tg-app/logs/errors.log
 ```
 
+### Проверить webhook в Telegram
+```bash
+curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
+```
 Правильный ответ:
 ```json
 {
   "ok": true,
   "result": {
-    "url": "https://my-demo-project-nt8u.vercel.app/api/webhook",
-    "has_custom_certificate": false,
+    "url": "https://193.168.48.98:8443/webhook",
+    "has_custom_certificate": true,
     "pending_update_count": 0,
-    "last_error_message": ""   ← если тут текст — это ошибка
+    "last_error_message": ""
   }
 }
 ```
 
-### Посмотреть логи ошибок
-
-1. Vercel → выбери проект
-2. Перейди в **Deployments** → выбери последний деплой
-3. Или: **Logs** (там видно все запросы и ошибки в реальном времени)
+### Тестовый POST вручную
+```bash
+curl -k -X POST https://193.168.48.98:8443/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"message":{"chat":{"id":123},"text":"/start","from":{"first_name":"Test"}}}'
+# Ожидаемо: {"ok":true}
+```
 
 ### Типичные проблемы
 
 | Проблема | Причина | Решение |
 |---|---|---|
-| Бот молчит | Webhook не зарегистрирован | Повтори Шаг 3 |
-| Бот молчит | Нет BOT_TOKEN в Vercel | Добавь переменную + редеплой |
-| Ошибка в логах: `SUPABASE_URL` | Нет переменной Supabase | Добавь обе Supabase-переменные |
-| Webhook не ставится (403) | Неверный WEBHOOK_SECRET | Проверь что `?secret=` совпадает с переменной |
-| Деплой завис | Случается | Зайди в Vercel → Deployments → Cancel → снова push |
-
-### Принудительный редеплой (без изменений кода)
-
-```bash
-git commit --allow-empty -m "chore: trigger redeploy"
-git push
-```
+| Бот молчит | Процесс упал | `pm2 restart bot` |
+| Бот молчит | Webhook не зарегистрирован | Повтори регистрацию webhook |
+| Ошибки в логах: Supabase | Нет переменных в .env | Проверь .env + `pm2 restart bot` |
+| pm2 не стартует при перезагрузке VPS | Не настроен startup | `pm2 startup` + `pm2 save` |
+| SSL ошибка | Сертификат протух | Создать новый: `openssl req -x509 ...` |
 
 ---
 
@@ -173,43 +158,76 @@ git push
 ```
 tg-app/
   index.html              ← Telegram Mini App (каталог, весь фронтенд)
-  vercel.json             ← правила маршрутизации URL
-  package.json            ← зависимости (только @supabase/supabase-js)
+  server.js               ← Express HTTPS-сервер (запускается на VPS)
+  vercel.json             ← правила маршрутизации для Vercel
+  package.json            ← зависимости: express, @supabase/supabase-js, dotenv
+  ssl/                    ← SSL-сертификат (не в git, создаётся вручную)
+  logs/                   ← логи ошибок (не в git)
   lib/
-    supabase.js           ← подключение к базе данных
+    logger.js             ← логирование: info/warn/error → logs/errors.log
+    supabase.js           ← клиент Supabase
   api/
-    webhook.js            ← главный обработчик сообщений бота
+    webhook.js            ← главный обработчик сообщений и заявок бота
     set-webhook.js        ← одноразовая регистрация webhook
-    platform-webhook.js   ← онбординг мастеров (пока не используется)
-    m/
-      [slug].js           ← страница мастера /m/название
-    master/
-      [slug].js           ← API данных мастера (JSON)
+    platform-webhook.js   ← онбординг и платформа мастеров
+    m/[slug].js           ← HTML-страница мастера /m/:slug
+    master/[slug].js      ← JSON данных мастера
 ```
 
 ---
 
-## Структура запроса (как работает изнутри)
+## Деплой с нуля на новый VPS
 
-```
-1. Пользователь пишет боту
-2. Telegram отправляет POST на https://...vercel.app/api/webhook
-3. Vercel запускает api/webhook.js (Node.js, ~100ms)
-4. webhook.js читает данные из Supabase (если нужно)
-5. webhook.js отвечает через Telegram API
-6. Vercel останавливает функцию (платим только за время работы)
-```
+Если нужно развернуть всё с нуля:
 
-Функция работает **только пока обрабатывает запрос**. Между запросами ничего не работает и не тратится.
+```bash
+# 1. Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# 2. PM2
+npm install -g pm2
+
+# 3. Код
+mkdir -p /app/bot && cd /app/bot
+git clone https://github.com/AexeyLihachev018/My-demo-project.git .
+cd tg-app && npm install
+
+# 4. SSL
+mkdir ssl
+openssl req -x509 -newkey rsa:2048 -keyout ssl/server.key -out ssl/server.crt \
+  -days 3650 -nodes -subj "/CN=193.168.48.98"
+
+# 5. .env
+cp .env.example .env
+nano .env   # заполнить значения
+
+# 6. Запуск
+cd /app/bot/tg-app
+pm2 start server.js --name bot
+pm2 startup && pm2 save
+
+# 7. Открыть порт 8443 (если закрыт)
+ufw allow 8443
+
+# 8. Зарегистрировать webhook
+curl -F "url=https://193.168.48.98:8443/webhook" \
+     -F "certificate=@ssl/server.crt" \
+     "https://api.telegram.org/bot$(grep BOT_TOKEN .env | cut -d= -f2)/setWebhook"
+```
 
 ---
 
-## Стоимость
+## Альтернативный деплой через Vercel (только для фронта)
 
-| Сервис | Бесплатно | Лимит |
-|---|---|---|
-| Vercel | Hobby план | 100GB трафика/мес, 100 000 вызовов/день |
-| Supabase | Free план | 500MB БД, 50 000 запросов/мес |
-| Telegram Bot API | Всегда бесплатно | — |
+Mini App (`tg-app/index.html`) автоматически деплоится на Vercel при каждом `git push`.
+URL: https://my-demo-project-nt8u.vercel.app
 
-Для проекта масштаба @PromGidravlika_bot бесплатных лимитов хватит надолго.
+Переменные окружения для Vercel (если перенести бота обратно):
+- Vercel → Project → Settings → Environment Variables
+- Добавить: `BOT_TOKEN`, `MANAGER_CHAT_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WEBHOOK_SECRET`, `APP_URL`
+
+Webhook на Vercel (без SSL-сертификата):
+```
+GET https://my-demo-project-nt8u.vercel.app/api/set-webhook?secret=ТВОЙ_СЕКРЕТ
+```

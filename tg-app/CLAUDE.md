@@ -4,12 +4,29 @@
 
 ```
 tg-app/
-  index.html   — единственный файл приложения (весь CSS, JS и данные внутри)
-  CLAUDE.md    — этот файл
+  index.html              — единственный файл Mini App (весь CSS, JS и данные внутри)
+  server.js               — Express HTTPS-сервер для VPS (порт 8443, самоподписанный SSL)
+  package.json            — зависимости: express, @supabase/supabase-js, dotenv
+  vercel.json             — конфиг Vercel (rewrites, CORS)
+  .env.example            — шаблон переменных окружения
+  ssl/                    — SSL-сертификат (не в git, создаётся вручную openssl)
+  logs/                   — логи ошибок (не в git, пишется автоматически)
+  lib/
+    logger.js             — логирование: info/warn/error, error-уровень → logs/errors.log
+    supabase.js           — клиент Supabase (createClient)
+  api/
+    webhook.js            — главный обработчик сообщений и заявок бота
+    set-webhook.js        — одноразовая регистрация webhook в Telegram
+    platform-webhook.js   — платформа мастеров: онбординг, запись, платежи
+    m/[slug].js           — HTML-страница мастера /m/:slug
+    master/[slug].js      — API данных мастера (JSON)
+  CLAUDE.md               — этот файл
 ```
 
-Всё приложение — один самодостаточный HTML-файл. Никаких зависимостей кроме
+Фронтенд (`index.html`) — один самодостаточный HTML-файл без зависимостей, кроме
 `https://telegram.org/js/telegram-web-app.js` (подключается из `<head>`).
+
+Серверная часть (`server.js` + `api/`) — Node.js ES modules, запускается через PM2 на VPS.
 
 ---
 
@@ -153,11 +170,15 @@ Inline-ошибки: `markFieldErr(container, selector, msg)` — без alert()
 - Открыть `tg-app/index.html` напрямую или через `file://`
 - `hasTG = false` → localStorage, кнопки отображаются внутри страницы
 
+**На VPS (продакшн):**
+```bash
+ssh root@193.168.48.98
+cd /app/bot && git pull && pm2 restart bot
+```
+
 **В Telegram**:
-1. Создать бота через @BotFather
-2. Задеплоить `index.html` на хостинг (Vercel, GitHub Pages)
-3. В BotFather: Menu → Web App → указать URL
-4. Или: `/newapp` команда
+1. Бот: @PromGidravlika_bot — написать `/start`
+2. Нажать «Открыть каталог» → откроется Mini App
 
 **Проверка sendData**:
 - Нужен бот с обработчиком `web_app_data`
