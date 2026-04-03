@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     log.info('send-lead', 'Заявка отправлена менеджеру', { name, phone });
 
     // Дублируем заявку в Google Sheets
-    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyMjE2qq1sdu5IIyQsxXm9fRXVPQxajGKdid6jelYm6R5GMtP-WEfXX51YZBUB6s-Vi/exec';
+    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbys2jSU6AzOc9Ifna6Ckupo8HVT1uydjfoNVLmJ5J77-YPv5wGQJgVksvajO0FNVkfl/exec';
     fetch(SHEETS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
